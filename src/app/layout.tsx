@@ -24,13 +24,13 @@ export const metadata: Metadata = {
     siteName:    'ScaleMind',
     title:       'ScaleMind — MicroSaaS, Automação e Renda Online',
     description: 'Conteúdo prático sobre MicroSaaS, automação no-code, finanças digitais e renda online.',
-    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: 'ScaleMind' }],
+    images: [{ url: '/og-default.jpg', width: 1200, height: 630, alt: 'ScaleMind' }],
   },
   twitter: {
     card:        'summary_large_image',
     title:       'ScaleMind — MicroSaaS, Automação e Renda Online',
     description: 'Conteúdo prático sobre MicroSaaS, automação no-code, finanças digitais e renda online.',
-    images:      [`${SITE_URL}/opengraph-image`],
+    images:      ['/og-default.jpg'],
   },
   robots: {
     index:  true,
