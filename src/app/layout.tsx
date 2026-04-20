@@ -57,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         )}
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider>
           <div className="min-h-screen flex flex-col">
             <Header />
