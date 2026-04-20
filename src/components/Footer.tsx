@@ -60,7 +60,7 @@ export function Footer() {
       </div>
 
       <div className="border-t border-gray-800 max-w-6xl mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-gray-600">
-        <p>© {new Date().getFullYear()} ScaleMind. Todos os direitos reservados.</p>
+        <p>© 2025 ScaleMind. Todos os direitos reservados.</p>
         <p>Feito com Next.js + Tailwind CSS</p>
       </div>
     </footer>
