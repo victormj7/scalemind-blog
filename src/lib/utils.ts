@@ -1,9 +1,7 @@
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
+  const [year, month, day] = iso.split('-').map(Number)
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']
+  return `${day} de ${months[month - 1]} de ${year}`
 }
 
 export function categoryColor(category: string): string {
