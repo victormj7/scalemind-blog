@@ -24,13 +24,13 @@ export const metadata: Metadata = {
     siteName:    'ScaleMind',
     title:       'ScaleMind — MicroSaaS, Automação e Renda Online',
     description: 'Conteúdo prático sobre MicroSaaS, automação no-code, finanças digitais e renda online.',
-    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'ScaleMind' }],
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: 'ScaleMind' }],
   },
   twitter: {
     card:        'summary_large_image',
     title:       'ScaleMind — MicroSaaS, Automação e Renda Online',
     description: 'Conteúdo prático sobre MicroSaaS, automação no-code, finanças digitais e renda online.',
-    images:      ['/og-default.png'],
+    images:      [`${SITE_URL}/opengraph-image`],
   },
   robots: {
     index:  true,
@@ -38,6 +38,10 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
   alternates: { canonical: SITE_URL },
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

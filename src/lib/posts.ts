@@ -7,6 +7,11 @@ const POSTS_DIR = path.join(process.cwd(), 'content', 'posts')
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+/** Sanitiza slug para evitar path traversal */
+function sanitizeSlug(slug: string): string {
+  return path.basename(slug).replace(/[^a-z0-9-]/gi, '')
+}
+
 function estimateReadingTime(content: string): string {
   const words = content.trim().split(/\s+/).length
   const minutes = Math.ceil(words / 200)
@@ -15,7 +20,7 @@ function estimateReadingTime(content: string): string {
 
 function parsePost(filename: string): PostMeta {
   const slug = filename.replace(/\.mdx?$/, '')
-  const raw = fs.readFileSync(path.join(POSTS_DIR, filename), 'utf-8')
+  const raw = fs.readFileSync(path.join(POSTS_DIR, path.basename(filename)), 'utf-8')
   const { data, content } = matter(raw)
 
   return {
@@ -48,8 +53,10 @@ export function getPostBySlug(slug: string): Post | null {
   const extensions = ['mdx', 'md']
   let raw: string | null = null
 
+  const safeSlug = sanitizeSlug(slug)
+
   for (const ext of extensions) {
-    const filepath = path.join(POSTS_DIR, `${slug}.${ext}`)
+    const filepath = path.join(POSTS_DIR, `${safeSlug}.${ext}`)
     if (fs.existsSync(filepath)) {
       raw = fs.readFileSync(filepath, 'utf-8')
       break
@@ -61,7 +68,7 @@ export function getPostBySlug(slug: string): Post | null {
   const { data, content } = matter(raw)
 
   return {
-    slug,
+    slug: safeSlug,
     title: data.title,
     description: data.description,
     date: data.date,
@@ -69,7 +76,7 @@ export function getPostBySlug(slug: string): Post | null {
     image: data.image ?? '/images/default-cover.jpg',
     readingTime: estimateReadingTime(content),
     featured: data.featured ?? false,
-    content, // markdown bruto — renderizado no componente
+    content,
   }
 }
 
