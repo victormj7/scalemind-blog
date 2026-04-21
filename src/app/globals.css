@@ -5,31 +5,24 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-
-  body {
-    @apply bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 font-sans antialiased;
-  }
-
-  ::selection {
-    @apply bg-brand-500/20 text-brand-700 dark:text-brand-300;
-  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; }
 }
 
 @layer components {
-  .prose-content h2 { @apply text-2xl font-bold mt-10 mb-4 text-gray-900 dark:text-white; }
-  .prose-content h3 { @apply text-xl font-bold mt-8 mb-3 text-gray-900 dark:text-white; }
-  .prose-content p  { @apply text-gray-700 dark:text-gray-300 leading-relaxed mb-4; }
-  .prose-content ul { @apply my-4 space-y-1 pl-4; }
-  .prose-content li { @apply text-gray-700 dark:text-gray-300; }
-  .prose-content strong { @apply font-semibold text-gray-900 dark:text-white; }
-  .prose-content a  { @apply text-brand-600 dark:text-brand-400 hover:underline; }
-  .prose-content blockquote { @apply border-l-4 border-brand-500 pl-4 italic text-gray-600 dark:text-gray-400 my-6; }
-  .prose-content hr { @apply my-8 border-gray-200 dark:border-gray-700; }
+  .prose-content h2 { @apply text-2xl font-bold mt-10 mb-4 text-gray-900; }
+  .prose-content h3 { @apply text-xl font-bold mt-8 mb-3 text-gray-900; }
+  .prose-content p  { @apply text-gray-700 leading-relaxed mb-4; }
+  .prose-content ul { @apply my-4 space-y-1 pl-5 list-disc; }
+  .prose-content ol { @apply my-4 space-y-1 pl-5 list-decimal; }
+  .prose-content li { @apply text-gray-700; }
+  .prose-content strong { @apply font-semibold text-gray-900; }
+  .prose-content a  { @apply text-sky-600 hover:underline; }
+  .prose-content blockquote { @apply border-l-4 border-sky-500 pl-4 italic text-gray-600 my-6; }
+  .prose-content hr { @apply my-8 border-gray-200; }
   .prose-content table { @apply w-full border-collapse my-6 text-sm; }
   .prose-content th,
-  .prose-content td { @apply border border-gray-200 dark:border-gray-700 px-4 py-2; }
-  .prose-content th { @apply bg-gray-50 dark:bg-gray-800 font-semibold; }
+  .prose-content td { @apply border border-gray-200 px-4 py-2; }
+  .prose-content th { @apply bg-gray-50 font-semibold; }
+  .prose-content code { @apply bg-gray-100 text-sky-700 px-1.5 py-0.5 rounded text-sm font-mono; }
 }

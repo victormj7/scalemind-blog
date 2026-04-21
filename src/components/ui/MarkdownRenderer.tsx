@@ -1,12 +1,18 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { marked } from 'marked'
-import { useMemo } from 'react'
 
 marked.setOptions({ gfm: true, breaks: true })
 
 export function MarkdownRenderer({ content }: { content: string }) {
-  const html = useMemo(() => marked.parse(content) as string, [content])
+  const [html, setHtml] = useState('')
+
+  useEffect(() => {
+    setHtml(marked.parse(content) as string)
+  }, [content])
+
+  if (!html) return null
 
   return (
     <div
