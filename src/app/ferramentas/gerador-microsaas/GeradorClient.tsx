@@ -302,8 +302,13 @@ function IdeaCard({ preview, full, source }: { preview: IdeaPreview; full: IdeaF
           </span>
         </div>
         <p className="text-sky-100 italic text-sm">"{preview.tagline}"</p>
-        <div className="mt-3 inline-block bg-white/15 rounded-lg px-3 py-1.5">
-          <span className="text-white font-bold text-sm">📈 {preview.potential}</span>
+        <div className="mt-3 flex items-center gap-3">
+          <div className="inline-block bg-white/15 rounded-lg px-3 py-1.5">
+            <span className="text-white font-bold text-sm">📈 {preview.potential}</span>
+          </div>
+          <div className="inline-block bg-emerald-400/20 rounded-lg px-3 py-1.5">
+            <span className="text-emerald-200 font-bold text-sm">⚡ Fácil de executar</span>
+          </div>
         </div>
       </div>
 
@@ -473,10 +478,10 @@ function UpgradeWall() {
       <div className="text-center mb-6">
         <div className="text-5xl mb-3">⚡</div>
         <h3 className="text-2xl font-extrabold mb-2">
-          Você já viu que as ideias funcionam.
+          Você encontrou ideias com potencial real de lucro.
         </h3>
         <p className="text-gray-400 max-w-sm mx-auto text-sm leading-relaxed">
-          Agora veja <strong className="text-white">COMO executar</strong> e ganhar dinheiro com elas. Suas 3 ideias gratuitas foram usadas.
+          Você encontrou ideias com <strong className="text-white">potencial real de lucro</strong>. Desbloqueie para continuar gerando e ver como executar cada uma.
         </p>
       </div>
 
@@ -506,7 +511,7 @@ function UpgradeWall() {
             className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm" />
           <button onClick={() => { if (email) setSent(true) }}
             className="w-full py-4 bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-400 hover:to-violet-400 text-white font-extrabold rounded-xl transition-all shadow-lg hover:-translate-y-0.5">
-            🚀 Quero desbloquear ideias completas
+            🚀 Desbloquear ideias ilimitadas
           </button>
         </div>
       ) : (
