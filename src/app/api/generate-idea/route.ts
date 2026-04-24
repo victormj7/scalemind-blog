@@ -85,56 +85,112 @@ Regras obrigatórias:
 // ─── Fallback local personalizado ────────────────────────────────────────────
 
 function generateLocalIdea(profile: UserProfile): IdeaFull {
-  const ideas: IdeaFull[] = [
-    {
-      name:        'ChecklistPro',
-      tagline:     'Checklists profissionais que seus clientes vão pagar para usar',
-      problem:     `Profissionais de ${profile.area} perdem tempo criando processos do zero para cada cliente, sem padronização.`,
-      audience:    `Profissionais autônomos e pequenas empresas de ${profile.area}`,
-      potential:   'R$ 2.000 a R$ 8.000/mês',
-      difficulty:  'Baixo',
-      description: `Plataforma de checklists e processos digitais para profissionais de ${profile.area}. Cada checklist é vendido como template ou assinatura.`,
-      howToApply:  'Crie 5 checklists dos processos mais comuns da sua área. Venda como templates digitais ou como assinatura mensal.',
-      stepByStep:  [
-        `Identifique os 5 processos mais repetitivos em ${profile.area}`,
-        'Crie os checklists no Notion ou Google Docs',
-        'Monte uma landing page no Carrd ou Framer',
-        'Venda por R$ 47/mês ou R$ 297/ano',
-      ],
-      validation:      'Ofereça gratuitamente para 5 profissionais da área e peça feedback. Se 3 de 5 usarem toda semana, valide.',
-      monetization:    'Assinatura mensal R$ 47/mês, plano anual R$ 397. Venda de templates avulsos R$ 97 cada.',
-      scalability:     'Expanda para outros nichos. Com 200 assinantes = R$ 9.400/mês recorrentes.',
-      aiUsage:         'Use ChatGPT para gerar novos checklists automaticamente baseados em casos de uso enviados pelos usuários.',
-      automationUsage: 'Automatize envio de lembretes semanais via Make + e-mail quando checklists ficam incompletos.',
-      noCodeVersion:   'Notion + Gumroad para venda + Brevo para e-mails. Zero código, funciona em 1 semana.',
-      devVersion:      'Next.js + Supabase + Stripe. Adicione colaboração em tempo real e analytics de uso.',
-    },
-    {
-      name:        'RelatórioFácil',
-      tagline:     'Relatórios profissionais em minutos, não em horas',
-      problem:     `Profissionais de ${profile.area} perdem 3-5 horas por semana criando relatórios manuais para clientes.`,
-      audience:    `Prestadores de serviço e consultores de ${profile.area}`,
-      potential:   'R$ 3.000 a R$ 12.000/mês',
-      difficulty:  'Médio',
-      description: `Gerador automático de relatórios profissionais para ${profile.area}. O usuário preenche dados básicos e recebe um PDF pronto.`,
-      howToApply:  'Crie um formulário que coleta os dados do período e gera automaticamente um relatório em PDF com gráficos.',
-      stepByStep:  [
-        `Mapeie quais dados os profissionais de ${profile.area} precisam reportar`,
-        'Crie um template de relatório no Canva ou Google Slides',
-        'Automatize a geração com Make + Google Slides API',
-        'Cobre R$ 97/mês por cliente ilimitado',
-      ],
-      validation:      'Faça manualmente para 3 clientes de graça. Se economizarem 2h+/semana, o produto tem valor.',
-      monetization:    'R$ 97/mês por usuário. Plano agência R$ 297/mês para até 20 clientes.',
-      scalability:     'Adicione integrações com ferramentas da área. Com 100 usuários = R$ 9.700/mês.',
-      aiUsage:         'Use IA para gerar análises e insights automáticos baseados nos dados inseridos.',
-      automationUsage: 'Make automatiza coleta de dados de múltiplas fontes e dispara geração do relatório toda semana.',
-      noCodeVersion:   'Typeform + Make + Google Slides + Zapier. Funciona sem código.',
-      devVersion:      'Next.js + Puppeteer para PDF + Supabase. Adicione dashboard com histórico.',
-    },
-  ]
+  const area = profile.area || 'geral'
 
-  return ideas[Math.floor(Math.random() * ideas.length)]
+  // Banco de ideias por objetivo
+  const byObjective: Record<string, IdeaFull[]> = {
+    'renda-extra': [
+      {
+        name:        `${area.charAt(0).toUpperCase() + area.slice(1)}Templates`,
+        tagline:     `Templates prontos que profissionais de ${area} pagam para usar todo dia`,
+        problem:     `Profissionais de ${area} perdem horas criando documentos do zero. Cada cliente exige um formato diferente e não existe padrão.`,
+        audience:    `Autônomos e freelancers de ${area} que atendem múltiplos clientes`,
+        potential:   'R$ 1.500 a R$ 6.000/mês',
+        difficulty:  'Baixo',
+        description: `Biblioteca de templates profissionais para ${area}: contratos, propostas, relatórios e checklists prontos para usar e personalizar.`,
+        howToApply:  `Crie 10 templates dos documentos mais usados em ${area}. Venda como pacote único ou assinatura com novos templates mensais.`,
+        stepByStep:  [
+          `Liste os 10 documentos que você mais cria ou vê sendo criados em ${area}`,
+          'Crie versões profissionais no Canva, Notion ou Google Docs',
+          'Monte uma loja no Gumroad ou Hotmart com preço de R$ 97 a R$ 297',
+          'Divulgue em grupos do Facebook e LinkedIn do nicho',
+        ],
+        validation:      'Ofereça 3 templates grátis em troca de e-mail. Se 50 pessoas baixarem em 7 dias, o mercado existe.',
+        monetization:    'Pacote único R$ 197. Assinatura mensal R$ 47/mês com 2 templates novos por mês. Meta: 100 assinantes = R$ 4.700/mês.',
+        scalability:     'Expanda para outros nichos similares. Contrate criadores de conteúdo para produzir templates em escala.',
+        aiUsage:         'Use ChatGPT para gerar variações dos templates automaticamente baseadas no nicho do cliente.',
+        automationUsage: 'Make envia automaticamente o template certo quando o cliente preenche um formulário com suas necessidades.',
+        noCodeVersion:   'Canva + Gumroad + Brevo para e-mails. Funciona em 3 dias sem código.',
+        devVersion:      'Next.js + Supabase + Stripe. Editor de templates no browser com exportação em PDF.',
+      },
+      {
+        name:        'MentorIA',
+        tagline:     `Respostas de especialista em ${area} disponíveis 24h por dia`,
+        problem:     `Iniciantes em ${area} têm dúvidas simples mas não têm acesso a mentores. Contratar um consultor custa R$ 200+/hora.`,
+        audience:    `Pessoas que estão começando em ${area} e precisam de orientação prática`,
+        potential:   'R$ 2.000 a R$ 8.000/mês',
+        difficulty:  'Baixo',
+        description: `Chatbot especializado em ${area} que responde dúvidas, sugere próximos passos e entrega conteúdo personalizado por assinatura mensal.`,
+        howToApply:  `Treine um chatbot com as 100 perguntas mais frequentes de ${area}. Venda acesso por assinatura mensal.`,
+        stepByStep:  [
+          `Colete as 100 dúvidas mais comuns de iniciantes em ${area}`,
+          'Configure um chatbot no Typebot ou Botpress com essas respostas',
+          'Adicione uma área de membros no Hotmart ou Kiwify',
+          'Cobre R$ 37/mês pelo acesso ilimitado ao chatbot',
+        ],
+        validation:      'Crie um grupo no WhatsApp e responda dúvidas manualmente por 2 semanas. Se as mesmas perguntas se repetirem, automatize.',
+        monetization:    'Assinatura R$ 37/mês. Com 200 assinantes = R$ 7.400/mês. Upsell para mentoria individual R$ 297/mês.',
+        scalability:     'Adicione novos nichos. O mesmo sistema funciona para qualquer área de conhecimento.',
+        aiUsage:         'Integre com OpenAI para respostas dinâmicas e personalizadas baseadas no histórico do usuário.',
+        automationUsage: 'Make envia conteúdo semanal personalizado baseado nas dúvidas que o usuário fez no mês.',
+        noCodeVersion:   'Typebot + Hotmart + Brevo. Sem código, funciona em 1 semana.',
+        devVersion:      'Next.js + OpenAI API + Supabase para histórico. Adicione memória de conversas.',
+      },
+    ],
+    'criar-negocio': [
+      {
+        name:        `${area.charAt(0).toUpperCase() + area.slice(1)}Hub`,
+        tagline:     `A plataforma que conecta quem precisa com quem entende de ${area}`,
+        problem:     `Empresas gastam semanas procurando profissionais qualificados de ${area}. Freelancers perdem tempo em plataformas genéricas com muita concorrência.`,
+        audience:    `Empresas que precisam de serviços de ${area} e profissionais que querem clientes qualificados`,
+        potential:   'R$ 5.000 a R$ 25.000/mês',
+        difficulty:  'Médio',
+        description: `Marketplace vertical especializado em ${area}: conecta empresas com profissionais verificados, com sistema de avaliação e pagamento integrado.`,
+        howToApply:  `Comece como curador manual: conecte 10 empresas com 10 profissionais de ${area}. Cobre 15% de comissão. Automatize depois.`,
+        stepByStep:  [
+          `Cadastre 20 profissionais verificados de ${area} na sua rede`,
+          'Crie um formulário simples para empresas descreverem o que precisam',
+          'Faça o match manualmente e cobre 15% do valor do projeto',
+          'Com R$ 5k em transações, invista em uma plataforma no Bubble.io',
+        ],
+        validation:      'Feche 3 contratos manualmente antes de construir qualquer tecnologia. Se funcionar, automatize.',
+        monetization:    '15% de comissão por projeto. Taxa de destaque R$ 97/mês para profissionais. Meta: R$ 50k em transações = R$ 7.500/mês.',
+        scalability:     'Expanda para cidades e depois para outros nichos. Adicione cursos e certificações para profissionais.',
+        aiUsage:         'IA faz o match automático entre perfil do profissional e necessidade da empresa com score de compatibilidade.',
+        automationUsage: 'Make automatiza onboarding, contratos, cobranças e avaliações pós-projeto.',
+        noCodeVersion:   'Softr + Airtable + Stripe. Marketplace funcional em 2 semanas sem código.',
+        devVersion:      'Next.js + Supabase + Stripe Connect para pagamentos entre partes.',
+      },
+    ],
+    'escalar': [
+      {
+        name:        `${area.charAt(0).toUpperCase() + area.slice(1)}Auto`,
+        tagline:     `Automatize os processos repetitivos de ${area} e escale sem contratar`,
+        problem:     `Negócios de ${area} que crescem precisam contratar mais pessoas para tarefas repetitivas. Isso aumenta custo e complexidade operacional.`,
+        audience:    `Donos de negócios de ${area} que faturam R$ 10k+/mês e querem escalar sem aumentar equipe`,
+        potential:   'R$ 8.000 a R$ 40.000/mês',
+        difficulty:  'Médio',
+        description: `Sistema de automação personalizado para ${area}: automatiza atendimento, cobranças, relatórios e processos operacionais do negócio.`,
+        howToApply:  `Mapeie os 5 processos mais repetitivos de negócios de ${area}. Crie automações prontas e venda como serviço mensal.`,
+        stepByStep:  [
+          `Entreviste 5 donos de negócios de ${area} sobre o que mais consome tempo`,
+          'Crie as 3 automações mais pedidas usando Make ou n8n',
+          'Ofereça implementação por R$ 997 + manutenção R$ 297/mês',
+          'Documente o processo e escale para 20 clientes',
+        ],
+        validation:      'Implemente de graça para 2 negócios de ${area}. Se economizarem 10h+/semana, o produto tem valor real.',
+        monetization:    'Setup R$ 997 + mensalidade R$ 297/mês. Com 30 clientes = R$ 8.910/mês recorrentes.',
+        scalability:     'Crie um produto SaaS com as automações mais populares. Venda como self-service por R$ 197/mês.',
+        aiUsage:         'IA analisa os dados do negócio e sugere novas automações baseadas nos gargalos identificados.',
+        automationUsage: 'Make ou n8n conectam todas as ferramentas do negócio: CRM, financeiro, atendimento e marketing.',
+        noCodeVersion:   'Make + Airtable + Typeform. Implementação completa sem código em 1 semana.',
+        devVersion:      'n8n self-hosted + Next.js dashboard + Supabase. Controle total e custo zero de plataforma.',
+      },
+    ],
+  }
+
+  const pool = byObjective[profile.objective] ?? byObjective['renda-extra']
+  return pool[Math.floor(Math.random() * pool.length)]
 }
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
