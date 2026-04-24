@@ -105,7 +105,11 @@ async function gerarComIA(profile: UserProfile): Promise<Ideia | null> {
       signal: AbortSignal.timeout(10000),
     })
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      const errBody = await res.text()
+      console.error('[OpenAI Error] status:', res.status, errBody)
+      return null
+    }
 
     const data  = await res.json()
     const text  = data.choices?.[0]?.message?.content ?? ''
