@@ -1,101 +1,99 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import type { MicroSaaSIdea } from '@/lib/ideas'
+import type { GenerateResponse, IdeaPreview, IdeaFull, UserProfile } from '@/types/generator'
 
-const NICHES = [
-  { value: '',          label: '🎯 Qualquer nicho' },
-  { value: 'marketing', label: '📣 Marketing Digital' },
-  { value: 'saude',     label: '🏥 Saúde e Bem-estar' },
-  { value: 'educacao',  label: '📚 Educação' },
-  { value: 'financas',  label: '💰 Finanças' },
+// ─── Configurações do formulário ─────────────────────────────────────────────
+
+const LEVELS = [
+  { value: 'iniciante',     label: '🌱 Iniciante',     desc: 'Sem conhecimento técnico' },
+  { value: 'intermediario', label: '⚡ Intermediário',  desc: 'Algum conhecimento digital' },
+  { value: 'avancado',      label: '🚀 Avançado',       desc: 'Sei programar ou tenho experiência' },
 ]
 
-const LOADING_MESSAGES = [
-  'Analisando oportunidades de mercado...',
-  'Identificando problemas não resolvidos...',
+const OBJECTIVES = [
+  { value: 'renda-extra',   label: '💰 Renda extra',       desc: 'R$ 1k a R$ 5k/mês a mais' },
+  { value: 'criar-negocio', label: '🏢 Criar negócio',     desc: 'Produto digital escalável' },
+  { value: 'escalar',       label: '📈 Escalar',           desc: 'Crescer algo que já existe' },
+]
+
+const TIMES = [
+  { value: 'pouco', label: '⏱ Pouco tempo',    desc: 'Até 1h por dia' },
+  { value: 'medio', label: '🕐 Tempo moderado', desc: '1 a 3h por dia' },
+  { value: 'total', label: '🔥 Dedicação total', desc: 'Foco total no projeto' },
+]
+
+const LOADING_MSGS = [
+  'Analisando seu perfil...',
+  'Identificando oportunidades...',
   'Calculando potencial de receita...',
-  'Validando modelo de negócio...',
+  'Personalizando para você...',
   'Finalizando sua ideia...',
 ]
 
-const DIFFICULTY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
-  'Baixo': { color: 'text-emerald-700', bg: 'bg-emerald-100', label: '🟢 Baixo' },
-  'Médio': { color: 'text-amber-700',   bg: 'bg-amber-100',   label: '🟡 Médio' },
-  'Alto':  { color: 'text-red-700',     bg: 'bg-red-100',     label: '🔴 Alto'  },
+const DIFFICULTY_STYLE: Record<string, string> = {
+  'Baixo': 'bg-emerald-100 text-emerald-700',
+  'Médio': 'bg-amber-100 text-amber-700',
+  'Alto':  'bg-red-100 text-red-700',
 }
 
-interface UsageState {
-  used: number
-  limit: number
-  remaining: number
-  hasAI?: boolean
-}
-
-interface IdeaResult {
-  idea: MicroSaaSIdea
-  usage: UsageState
-  source: 'ai' | 'local'
-}
+// ─── Componente principal ─────────────────────────────────────────────────────
 
 export function GeradorClient() {
-  const [niche,    setNiche]    = useState('')
+  const [step,     setStep]     = useState<'form' | 'result'>('form')
   const [loading,  setLoading]  = useState(false)
   const [loadMsg,  setLoadMsg]  = useState(0)
-  const [result,   setResult]   = useState<IdeaResult | null>(null)
+  const [result,   setResult]   = useState<GenerateResponse | null>(null)
   const [error,    setError]    = useState<string | null>(null)
-  const [usage,    setUsage]    = useState<UsageState>({ used: 0, limit: 3, remaining: 3 })
-  const [history,  setHistory]  = useState<MicroSaaSIdea[]>([])
-  const [animate,  setAnimate]  = useState(false)
+  const [usage,    setUsage]    = useState({ used: 0, limit: 3, remaining: 3 })
+  const [isPremium, setIsPremium] = useState(false)
   const resultRef = useRef<HTMLDivElement>(null)
+
+  const [profile, setProfile] = useState<UserProfile>({
+    area:      '',
+    level:     'iniciante',
+    objective: 'renda-extra',
+    time:      'pouco',
+  })
 
   useEffect(() => {
     fetch('/api/generate-idea')
       .then(r => r.json())
-      .then(data => setUsage(data))
+      .then(d => setUsage(d))
       .catch(() => {})
   }, [])
 
-  // Rotacionar mensagens de loading
   useEffect(() => {
     if (!loading) return
-    const interval = setInterval(() => {
-      setLoadMsg(prev => (prev + 1) % LOADING_MESSAGES.length)
-    }, 1400)
-    return () => clearInterval(interval)
+    const t = setInterval(() => setLoadMsg(p => (p + 1) % LOADING_MSGS.length), 1400)
+    return () => clearInterval(t)
   }, [loading])
 
   async function handleGenerate() {
-    if (usage.remaining <= 0 || loading) return
+    if (!profile.area.trim()) { setError('Informe sua área de interesse.'); return }
+    if (usage.remaining <= 0) return
     setLoading(true)
     setError(null)
-    setAnimate(false)
-    setLoadMsg(0)
 
     try {
-      const res  = await fetch('/api/generate-idea', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ niche }),
-      })
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (isPremium && process.env.NEXT_PUBLIC_PREMIUM_TOKEN) {
+        headers['x-premium-token'] = process.env.NEXT_PUBLIC_PREMIUM_TOKEN
+      }
+
+      const res  = await fetch('/api/generate-idea', { method: 'POST', headers, body: JSON.stringify(profile) })
       const data = await res.json()
 
       if (res.status === 429) {
+        setUsage(u => ({ ...u, remaining: 0, used: u.limit }))
         setError('limit_reached')
-        setUsage(prev => ({ ...prev, remaining: 0, used: prev.limit }))
         return
       }
 
       setResult(data)
       setUsage(data.usage)
-      setHistory(prev => [data.idea, ...prev].slice(0, 5))
-
-      // Scroll suave para o resultado + animação
-      setTimeout(() => {
-        setAnimate(true)
-        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-
+      setStep('result')
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     } catch {
       setError('Erro de conexão. Tente novamente.')
     } finally {
@@ -103,208 +101,205 @@ export function GeradorClient() {
     }
   }
 
-  const limitReached = usage.remaining <= 0
+  // Limite atingido
+  if (usage.remaining <= 0 && step !== 'result') {
+    return <UpgradeWall />
+  }
 
   return (
     <div className="space-y-6">
 
-      {/* Contador de uso */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-700">Ideias gratuitas hoje</span>
-            {usage.hasAI && (
-              <span className="text-xs bg-violet-100 text-violet-700 font-bold px-2 py-0.5 rounded-full">
-                ✨ IA ativa
-              </span>
-            )}
-          </div>
-          <span className={`text-sm font-bold tabular-nums ${limitReached ? 'text-red-600' : 'text-sky-600'}`}>
-            {usage.used}/{usage.limit}
-          </span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-          <div
-            className={`h-2.5 rounded-full transition-all duration-700 ease-out ${
-              limitReached ? 'bg-red-500' :
-              usage.used >= 2 ? 'bg-amber-500' : 'bg-sky-500'
-            }`}
-            style={{ width: `${(usage.used / usage.limit) * 100}%` }}
-          />
-        </div>
-        <p className="text-xs text-gray-400 mt-2">
-          {limitReached
-            ? '⚠️ Limite atingido — volte amanhã ou faça upgrade'
-            : `${usage.remaining} ${usage.remaining === 1 ? 'ideia restante' : 'ideias restantes'} hoje`
-          }
-        </p>
-      </div>
+      {/* Barra de uso */}
+      <UsageBar usage={usage} />
 
-      {/* Formulário ou Upgrade */}
-      {!limitReached ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-5">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nicho de interesse
-              <span className="ml-1 text-gray-400 font-normal">(opcional)</span>
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {NICHES.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setNiche(value)}
-                  className={`px-3 py-2.5 rounded-xl text-sm font-medium border-2 transition-all text-left ${
-                    niche === value
-                      ? 'border-sky-500 bg-sky-50 text-sky-700'
-                      : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+      {/* Formulário */}
+      {step === 'form' && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-sky-600 to-violet-600 px-6 py-4">
+            <h2 className="text-white font-bold text-lg">Personalize sua ideia</h2>
+            <p className="text-sky-100 text-sm">Quanto mais detalhes, mais precisa será a ideia</p>
+          </div>
+
+          <div className="p-6 space-y-7">
+
+            {/* Área */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                1. Qual é sua área de interesse ou experiência?
+              </label>
+              <input
+                type="text"
+                value={profile.area}
+                onChange={e => setProfile(p => ({ ...p, area: e.target.value }))}
+                placeholder="Ex: nutrição, marketing, advocacia, fitness, contabilidade..."
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-sky-500 focus:outline-none text-gray-800 text-sm transition-colors"
+              />
+              <p className="text-xs text-gray-400 mt-1">Pode ser qualquer área — não precisa ser tecnologia</p>
             </div>
-          </div>
 
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="w-full py-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 text-white font-bold rounded-xl transition-all text-base shadow-md hover:shadow-lg hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed relative overflow-hidden"
-          >
-            {loading ? (
-              <span className="flex flex-col items-center gap-1">
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Gerando com IA...
-                </span>
-                <span className="text-xs text-sky-200 font-normal animate-pulse">
-                  {LOADING_MESSAGES[loadMsg]}
-                </span>
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                🚀 Gerar ideia de MicroSaaS
-                {usage.remaining <= 1 && (
-                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
-                    última hoje
-                  </span>
-                )}
-              </span>
-            )}
-          </button>
-
-          {error && error !== 'limit_reached' && (
-            <p className="text-red-500 text-sm text-center bg-red-50 rounded-lg py-2">{error}</p>
-          )}
-        </div>
-      ) : (
-        <UpgradeCard />
-      )}
-
-      {/* Resultado com animação */}
-      {result && !loading && (
-        <div
-          ref={resultRef}
-          className={`transition-all duration-500 ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-        >
-          <IdeaCard idea={result.idea} source={result.source} />
-        </div>
-      )}
-
-      {/* Histórico */}
-      {history.length > 1 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">
-            Geradas nesta sessão
-          </h3>
-          {history.slice(1).map((idea, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setResult({ idea, usage, source: 'local' })
-                setAnimate(true)
-                resultRef.current?.scrollIntoView({ behavior: 'smooth' })
-              }}
-              className="w-full bg-white rounded-xl border border-gray-100 p-4 hover:border-sky-200 hover:shadow-sm transition-all text-left group"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-gray-800 text-sm group-hover:text-sky-600 transition-colors">
-                  {idea.name}
-                </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${DIFFICULTY_CONFIG[idea.difficulty]?.bg} ${DIFFICULTY_CONFIG[idea.difficulty]?.color}`}>
-                  {idea.difficulty}
-                </span>
+            {/* Nível */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3">
+                2. Qual é seu nível de conhecimento técnico?
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {LEVELS.map(({ value, label, desc }) => (
+                  <button key={value} onClick={() => setProfile(p => ({ ...p, level: value as UserProfile['level'] }))}
+                    className={`p-4 rounded-xl border-2 text-left transition-all ${
+                      profile.level === value
+                        ? 'border-sky-500 bg-sky-50'
+                        : 'border-gray-100 hover:border-gray-200 bg-gray-50'
+                    }`}>
+                    <div className="font-bold text-sm text-gray-800">{label}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+                  </button>
+                ))}
               </div>
-              <p className="text-xs text-gray-500 mt-1 line-clamp-1">{idea.description}</p>
+            </div>
+
+            {/* Objetivo */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3">
+                3. Qual é seu objetivo principal?
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {OBJECTIVES.map(({ value, label, desc }) => (
+                  <button key={value} onClick={() => setProfile(p => ({ ...p, objective: value as UserProfile['objective'] }))}
+                    className={`p-4 rounded-xl border-2 text-left transition-all ${
+                      profile.objective === value
+                        ? 'border-violet-500 bg-violet-50'
+                        : 'border-gray-100 hover:border-gray-200 bg-gray-50'
+                    }`}>
+                    <div className="font-bold text-sm text-gray-800">{label}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tempo */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3">
+                4. Quanto tempo você tem disponível?
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {TIMES.map(({ value, label, desc }) => (
+                  <button key={value} onClick={() => setProfile(p => ({ ...p, time: value as UserProfile['time'] }))}
+                    className={`p-4 rounded-xl border-2 text-left transition-all ${
+                      profile.time === value
+                        ? 'border-emerald-500 bg-emerald-50'
+                        : 'border-gray-100 hover:border-gray-200 bg-gray-50'
+                    }`}>
+                    <div className="font-bold text-sm text-gray-800">{label}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {error && error !== 'limit_reached' && (
+              <p className="text-red-500 text-sm bg-red-50 rounded-lg px-4 py-2">{error}</p>
+            )}
+
+            <button onClick={handleGenerate} disabled={loading}
+              className="w-full py-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 text-white font-extrabold rounded-xl transition-all text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:translate-y-0">
+              {loading ? (
+                <span className="flex flex-col items-center gap-1">
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Gerando sua ideia personalizada...
+                  </span>
+                  <span className="text-xs text-sky-200 font-normal animate-pulse">
+                    {LOADING_MSGS[loadMsg]}
+                  </span>
+                </span>
+              ) : (
+                `🚀 Gerar minha ideia personalizada (${usage.remaining} restante${usage.remaining !== 1 ? 's' : ''})`
+              )}
             </button>
-          ))}
+          </div>
+        </div>
+      )}
+
+      {/* Resultado */}
+      {step === 'result' && result && (
+        <div ref={resultRef} className="space-y-4">
+          <button onClick={() => { setStep('form'); setResult(null) }}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-sky-600 transition-colors">
+            ← Gerar nova ideia
+          </button>
+          <IdeaCard preview={result.preview} full={result.full} source={result.source} />
         </div>
       )}
     </div>
   )
 }
 
-// ─── IdeaCard ─────────────────────────────────────────────────────────────────
+// ─── Barra de uso ─────────────────────────────────────────────────────────────
 
-function IdeaCard({ idea, source }: { idea: MicroSaaSIdea; source: 'ai' | 'local' }) {
+function UsageBar({ usage }: { usage: { used: number; limit: number; remaining: number } }) {
+  const pct = (usage.used / usage.limit) * 100
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm font-semibold text-gray-700">Ideias gratuitas hoje</span>
+        <span className={`text-sm font-bold tabular-nums ${usage.remaining === 0 ? 'text-red-600' : 'text-sky-600'}`}>
+          {usage.used}/{usage.limit}
+        </span>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+        <div className={`h-2 rounded-full transition-all duration-700 ${
+          usage.remaining === 0 ? 'bg-red-500' : usage.used >= 2 ? 'bg-amber-500' : 'bg-sky-500'
+        }`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-xs text-gray-400 mt-1.5">
+        {usage.remaining > 0
+          ? `${usage.remaining} ideia${usage.remaining !== 1 ? 's' : ''} restante${usage.remaining !== 1 ? 's' : ''} hoje`
+          : 'Limite atingido — volte amanhã ou faça upgrade'}
+      </p>
+    </div>
+  )
+}
+
+// ─── Card da ideia ────────────────────────────────────────────────────────────
+
+function IdeaCard({ preview, full, source }: { preview: IdeaPreview; full: IdeaFull | null; source: string }) {
   const [copied, setCopied] = useState(false)
-  const diff = DIFFICULTY_CONFIG[idea.difficulty] ?? DIFFICULTY_CONFIG['Médio']
 
-  function copyIdea() {
-    const text = [
-      `🚀 ${idea.name}`,
-      ``,
-      `📝 ${idea.description}`,
-      ``,
-      `❌ Problema: ${idea.problem}`,
-      `👥 Público: ${idea.audience}`,
-      `💰 Monetização: ${idea.monetization}`,
-      `📈 Potencial: ${idea.mrpPotential}`,
-      `🔧 Ferramentas: ${idea.tools.join(', ')}`,
-      ``,
-      `Gerado em scalemind-blog.vercel.app`,
-    ].join('\n')
-
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
-    })
+  function copyPreview() {
+    const text = `💡 ${preview.name}\n"${preview.tagline}"\n\n🎯 Problema: ${preview.problem}\n👥 Público: ${preview.audience}\n📈 Potencial: ${preview.potential}`
+    navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
   }
 
   return (
     <div className="bg-white rounded-2xl border-2 border-sky-200 shadow-xl overflow-hidden">
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-sky-600 via-sky-700 to-violet-700 p-6 text-white">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sky-300 text-xs font-bold uppercase tracking-widest">
-                Ideia gerada
-              </span>
-              {source === 'ai' && (
-                <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  ✨ IA
-                </span>
-              )}
-            </div>
-            <h2 className="text-2xl font-extrabold leading-tight">{idea.name}</h2>
+      <div className="bg-gradient-to-br from-sky-600 to-violet-700 p-6 text-white">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div>
+            {source === 'ai' && (
+              <span className="inline-block bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2">✨ Gerado com IA</span>
+            )}
+            <h2 className="text-2xl font-extrabold leading-tight">{preview.name}</h2>
           </div>
-          <span className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full bg-white/15 text-white`}>
-            {diff.label}
+          <span className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full bg-white/15`}>
+            {preview.difficulty}
           </span>
         </div>
-        <p className="text-sky-100 leading-relaxed text-sm">{idea.description}</p>
+        <p className="text-sky-100 italic text-sm">"{preview.tagline}"</p>
+        <div className="mt-3 inline-block bg-white/15 rounded-lg px-3 py-1.5">
+          <span className="text-white font-bold text-sm">📈 {preview.potential}</span>
+        </div>
       </div>
 
-      {/* Detalhes */}
+      {/* Preview — visível para todos */}
       <div className="divide-y divide-gray-50">
         {[
-          { icon: '🎯', label: 'Problema que resolve', value: idea.problem,      bg: 'bg-red-50' },
-          { icon: '👥', label: 'Público-alvo',         value: idea.audience,     bg: 'bg-blue-50' },
-          { icon: '💰', label: 'Como monetizar',       value: idea.monetization, bg: 'bg-emerald-50' },
-          { icon: '📈', label: 'Potencial de receita', value: idea.mrpPotential, bg: 'bg-amber-50' },
+          { icon: '🎯', label: 'Problema que resolve', value: preview.problem,  bg: 'bg-red-50' },
+          { icon: '👥', label: 'Público-alvo',         value: preview.audience, bg: 'bg-blue-50' },
         ].map(({ icon, label, value, bg }) => (
-          <div key={label} className={`flex gap-4 p-4 ${bg}`}>
+          <div key={label} className={`flex gap-4 p-5 ${bg}`}>
             <span className="text-2xl shrink-0">{icon}</span>
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
@@ -314,114 +309,199 @@ function IdeaCard({ idea, source }: { idea: MicroSaaSIdea; source: 'ai' | 'local
         ))}
       </div>
 
-      {/* Ferramentas */}
-      <div className="p-5 bg-gray-50">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-          🔧 Ferramentas para construir
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {idea.tools.map(tool => (
-            <span key={tool}
-              className="bg-white border border-gray-200 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
-              {tool}
-            </span>
-          ))}
-        </div>
-      </div>
+      {/* Conteúdo premium */}
+      {full ? (
+        <PremiumContent full={full} />
+      ) : (
+        <PremiumBlur />
+      )}
 
       {/* Ações */}
       <div className="p-4 flex gap-3 border-t border-gray-100">
-        <button onClick={copyIdea}
-          className={`flex-1 py-3 font-semibold rounded-xl text-sm transition-all ${
-            copied
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-          }`}>
-          {copied ? '✅ Copiado!' : '📋 Copiar ideia'}
+        <button onClick={copyPreview}
+          className={`flex-1 py-3 font-semibold rounded-xl text-sm transition-all ${copied ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}>
+          {copied ? '✅ Copiado!' : '📋 Copiar preview'}
         </button>
         <a href="/blog?categoria=MicroSaaS"
           className="flex-1 py-3 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-sm transition-colors text-center">
-          📚 Como executar →
+          📚 Aprender mais →
         </a>
       </div>
     </div>
   )
 }
 
-// ─── UpgradeCard ──────────────────────────────────────────────────────────────
+// ─── Conteúdo premium completo ────────────────────────────────────────────────
 
-function UpgradeCard() {
+function PremiumContent({ full }: { full: IdeaFull }) {
+  return (
+    <div className="divide-y divide-gray-50">
+      {[
+        { icon: '⚙️', label: 'Como aplicar na prática', value: full.howToApply,     bg: 'bg-violet-50' },
+        { icon: '💰', label: 'Como monetizar',           value: full.monetization,   bg: 'bg-emerald-50' },
+        { icon: '📈', label: 'Possibilidade de escala',  value: full.scalability,    bg: 'bg-amber-50' },
+        { icon: '🤖', label: 'Como usar IA',             value: full.aiUsage,        bg: 'bg-sky-50' },
+        { icon: '⚡', label: 'Como automatizar',         value: full.automationUsage, bg: 'bg-indigo-50' },
+      ].map(({ icon, label, value, bg }) => (
+        <div key={label} className={`flex gap-4 p-5 ${bg}`}>
+          <span className="text-2xl shrink-0">{icon}</span>
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+            <p className="text-gray-800 text-sm leading-relaxed">{value}</p>
+          </div>
+        </div>
+      ))}
+
+      {/* Passo a passo */}
+      <div className="p-5 bg-gray-50">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">🚀 Passo a passo inicial</p>
+        <ol className="space-y-2">
+          {full.stepByStep.map((step, i) => (
+            <li key={i} className="flex gap-3 text-sm text-gray-700">
+              <span className="w-6 h-6 bg-sky-600 text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                {i + 1}
+              </span>
+              {step}
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {/* Validação */}
+      <div className="p-5 bg-yellow-50">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">🧪 Como validar em 7 dias</p>
+        <p className="text-gray-800 text-sm leading-relaxed">{full.validation}</p>
+      </div>
+
+      {/* Versões */}
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+        <div className="p-5 bg-green-50">
+          <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">🧩 Sem saber programar</p>
+          <p className="text-gray-700 text-sm leading-relaxed">{full.noCodeVersion}</p>
+        </div>
+        <div className="p-5 bg-blue-50">
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">👨‍💻 Sabendo programar</p>
+          <p className="text-gray-700 text-sm leading-relaxed">{full.devVersion}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Blur premium ─────────────────────────────────────────────────────────────
+
+function PremiumBlur() {
   const [email, setEmail] = useState('')
   const [sent,  setSent]  = useState(false)
 
-  function handleWaitlist(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email) return
-    // Aqui você conecta com Mailchimp, Brevo ou Supabase
-    setSent(true)
-  }
+  return (
+    <div className="relative">
+      {/* Conteúdo borrado */}
+      <div className="select-none pointer-events-none">
+        {[
+          { icon: '⚙️', label: 'Como aplicar na prática', value: 'Crie uma landing page simples descrevendo o produto e adicione um botão de pré-venda. Use Carrd ou Framer para montar em menos de 2 horas sem código.', bg: 'bg-violet-50' },
+          { icon: '💰', label: 'Como monetizar',           value: 'Assinatura mensal de R$ 97/mês com plano anual de R$ 797. Ofereça 14 dias grátis para reduzir fricção na conversão inicial.', bg: 'bg-emerald-50' },
+          { icon: '🚀', label: 'Passo a passo inicial',    value: '1. Valide com 5 potenciais clientes  2. Monte MVP em 2 semanas  3. Lance para lista de espera  4. Itere com feedback real', bg: 'bg-amber-50' },
+        ].map(({ icon, label, value, bg }) => (
+          <div key={label} className={`flex gap-4 p-5 ${bg} blur-sm`}>
+            <span className="text-2xl shrink-0">{icon}</span>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+              <p className="text-gray-800 text-sm leading-relaxed">{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Overlay de conversão */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/90 to-white flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <div className="text-4xl mb-3">🔓</div>
+          <h3 className="text-xl font-extrabold text-gray-900 mb-2">
+            Você acabou de ver o potencial
+          </h3>
+          <p className="text-gray-600 text-sm mb-5 leading-relaxed">
+            Desbloqueie o plano completo para ver <strong>exatamente como transformar isso em um negócio real</strong> — passo a passo, validação e como monetizar.
+          </p>
+
+          {!sent ? (
+            <div className="space-y-3">
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-sky-500 focus:outline-none text-sm" />
+              <button
+                onClick={() => { if (email) setSent(true) }}
+                className="w-full py-3.5 bg-gradient-to-r from-sky-600 to-violet-600 hover:from-sky-500 hover:to-violet-500 text-white font-extrabold rounded-xl transition-all shadow-lg hover:-translate-y-0.5 text-sm">
+                🚀 Desbloquear ideia completa
+              </button>
+              <p className="text-xs text-gray-400">Em breve · Seja notificado primeiro</p>
+            </div>
+          ) : (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+              <p className="text-emerald-700 font-bold">🎉 Você está na lista!</p>
+              <p className="text-emerald-600 text-sm mt-1">Avisaremos quando o Premium estiver disponível.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tela de upgrade (limite atingido) ───────────────────────────────────────
+
+function UpgradeWall() {
+  const [email, setEmail] = useState('')
+  const [sent,  setSent]  = useState(false)
 
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white shadow-2xl">
       <div className="text-center mb-6">
         <div className="text-5xl mb-3">⚡</div>
-        <h3 className="text-2xl font-extrabold mb-2">Você está no limite!</h3>
-        <p className="text-gray-400 text-sm max-w-xs mx-auto">
-          Suas 3 ideias gratuitas de hoje foram usadas.
-          Volte amanhã ou entre na lista de espera do Premium.
+        <h3 className="text-2xl font-extrabold mb-2">
+          Você já viu que as ideias funcionam.
+        </h3>
+        <p className="text-gray-400 max-w-sm mx-auto text-sm leading-relaxed">
+          Agora veja <strong className="text-white">COMO executar</strong> e ganhar dinheiro com elas. Suas 3 ideias gratuitas foram usadas.
         </p>
       </div>
 
-      {/* Benefícios */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-6 space-y-2.5">
-        <p className="text-sky-400 font-bold text-sm mb-3">✨ Premium — Em breve</p>
-        {[
-          ['🚀', 'Ideias ilimitadas por dia'],
-          ['🤖', 'Geração 100% com IA (GPT-4)'],
-          ['🎯', 'Análise de concorrência por nicho'],
-          ['📊', 'Estimativa de mercado detalhada'],
-          ['💾', 'Salvar e organizar suas ideias'],
-          ['⚡', 'Acesso antecipado a novas features'],
-        ].map(([icon, text]) => (
-          <div key={text} className="flex items-center gap-2.5 text-sm text-gray-200">
-            <span>{icon}</span>
-            <span>{text}</span>
-          </div>
-        ))}
+      {/* Comparação free vs premium */}
+      <div className="grid grid-cols-2 gap-3 mb-6 text-sm">
+        <div className="bg-white/5 rounded-xl p-4">
+          <p className="font-bold text-gray-400 mb-3">🆓 Gratuito</p>
+          {['Nome da ideia', 'Problema', 'Público-alvo', '❌ Como executar', '❌ Passo a passo', '❌ Como monetizar'].map(i => (
+            <p key={i} className={`text-xs py-1 ${i.startsWith('❌') ? 'text-gray-600 line-through' : 'text-gray-300'}`}>{i.replace('❌ ', '')}</p>
+          ))}
+        </div>
+        <div className="bg-sky-500/10 border border-sky-500/30 rounded-xl p-4">
+          <p className="font-bold text-sky-400 mb-3">💎 Premium</p>
+          {['Nome da ideia', 'Problema', 'Público-alvo', '✅ Como executar', '✅ Passo a passo', '✅ Como monetizar', '✅ Validação', '✅ IA e automação', '✅ Sem código'].map(i => (
+            <p key={i} className="text-xs py-1 text-gray-200">{i}</p>
+          ))}
+        </div>
       </div>
 
-      {/* Lista de espera */}
       {!sent ? (
-        <form onSubmit={handleWaitlist} className="space-y-3">
-          <p className="text-sm text-gray-300 text-center font-medium">
-            Entre na lista de espera e seja notificado primeiro:
+        <div className="space-y-3">
+          <p className="text-center text-sm text-gray-300 font-medium">
+            Entre na lista de espera e seja o primeiro a saber:
           </p>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)}
             placeholder="seu@email.com"
-            required
-            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
-          />
-          <button type="submit"
-            className="w-full py-3.5 bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-400 hover:to-violet-400 text-white font-extrabold rounded-xl transition-all shadow-lg hover:-translate-y-0.5 text-sm">
-            🚀 Quero acesso Premium
+            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm" />
+          <button onClick={() => { if (email) setSent(true) }}
+            className="w-full py-4 bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-400 hover:to-violet-400 text-white font-extrabold rounded-xl transition-all shadow-lg hover:-translate-y-0.5">
+            🚀 Quero desbloquear ideias completas
           </button>
-        </form>
+        </div>
       ) : (
-        <div className="text-center py-4">
-          <div className="text-4xl mb-2">🎉</div>
-          <p className="font-bold text-emerald-400">Você está na lista!</p>
-          <p className="text-gray-400 text-sm mt-1">
-            Avisaremos quando o Premium estiver disponível.
-          </p>
+        <div className="text-center py-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+          <p className="text-emerald-400 font-bold text-lg">🎉 Você está na lista!</p>
+          <p className="text-gray-400 text-sm mt-1">Avisaremos quando o Premium estiver disponível.</p>
+          <p className="text-gray-500 text-xs mt-3">Volte amanhã para mais 3 ideias gratuitas</p>
         </div>
       )}
-
-      <p className="text-gray-600 text-xs text-center mt-4">
-        Ou volte amanhã para mais 3 ideias gratuitas
-      </p>
     </div>
   )
 }
