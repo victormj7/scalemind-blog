@@ -57,10 +57,19 @@ export function GeradorClient() {
   })
 
   useEffect(() => {
-    fetch('/api/generate-idea')
-      .then(r => r.json())
-      .then(d => setUsage(d))
-      .catch(() => {})
+    const today = new Date().toISOString().split('T')[0]
+    try {
+      const saved = localStorage.getItem('scalemind_usage')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.date === today) {
+          const used = parsed.used ?? 0
+          setUsage({ used, limit: 3, remaining: Math.max(0, 3 - used) })
+          return
+        }
+      }
+      localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: 0 }))
+    } catch {}
   }, [])
 
   useEffect(() => {
@@ -91,7 +100,12 @@ export function GeradorClient() {
       }
 
       setResult(data)
+      const newUsed = data.usage.used
       setUsage(data.usage)
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: newUsed }))
+      } catch {}
       setStep('result')
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     } catch {
