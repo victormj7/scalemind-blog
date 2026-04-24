@@ -3,7 +3,7 @@ import './globals.css'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://scalemind.blog'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://scalemind-blog.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
