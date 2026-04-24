@@ -119,7 +119,8 @@ async function gerarComIA(profile: UserProfile): Promise<Ideia | null> {
     }
 
     return ideia
-  } catch {
+  } catch (err) {
+    console.error('[OpenAI Error]', err)
     return null
   }
 }
