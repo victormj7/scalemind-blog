@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { UserProfile, Ideia, ApiResponse } from '@/types/generator'
+import { ideaLimiter } from '@/lib/rateLimiter'
 
 const FREE_LIMIT = 3
-const usageMap   = new Map<string, { count: number; date: string }>()
-
-function getToday(): string {
-  return new Date().toISOString().split('T')[0]
-}
 
 function getClientIP(req: NextRequest): string {
   return (
@@ -203,16 +199,15 @@ function gerarFallback(profile: UserProfile): Ideia {
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const ip    = getClientIP(req)
-  const today = getToday()
-  const usage = usageMap.get(ip)
+  const ip     = getClientIP(req)
+  const check  = ideaLimiter.check(ip)
 
-  if (usage && usage.date === today && usage.count >= FREE_LIMIT) {
+  if (!check.allowed) {
     return NextResponse.json({
       success: false,
       error:   'limit_reached',
       limit:   FREE_LIMIT,
-      used:    usage.count,
+      used:    FREE_LIMIT,
     }, { status: 429 })
   }
 
@@ -229,13 +224,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Body inválido.' }, { status: 400 })
   }
 
-  // Atualizar contador
-  if (!usage || usage.date !== today) {
-    usageMap.set(ip, { count: 1, date: today })
-  } else {
-    usageMap.set(ip, { count: usage.count + 1, date: today })
-  }
-  const newUsage = usageMap.get(ip)!
+  // Incrementar contador com TTL
+  const newUsage = ideaLimiter.increment(ip)
+  const used     = newUsage.count
 
   // Tentar IA, fallback se falhar
   const aiIdeia = await gerarComIA(profile)
@@ -248,9 +239,9 @@ export async function POST(req: NextRequest) {
     source:   fallback ? 'local' : 'ai',
     data:     ideia,
     usage: {
-      used:      newUsage.count,
+      used:      used,
       limit:     FREE_LIMIT,
-      remaining: Math.max(0, FREE_LIMIT - newUsage.count),
+      remaining: Math.max(0, FREE_LIMIT - used),
     },
   }
 
@@ -259,9 +250,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const ip    = getClientIP(req)
-  const today = getToday()
-  const usage = usageMap.get(ip)
-  const used  = (usage && usage.date === today) ? usage.count : 0
+  const entry = ideaLimiter.get(ip)
+  const used  = entry?.count ?? 0
 
   return NextResponse.json({
     used,

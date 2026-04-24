@@ -37,18 +37,35 @@ const DIFICULDADE_STYLE: Record<string, string> = {
   'Alto':  'bg-red-100 text-red-700',
 }
 
-// ─── Tracking simples ─────────────────────────────────────────────────────────
+// ─── Tracking real via API ───────────────────────────────────────────────────
 
 function track(event: string, data?: Record<string, unknown>) {
-  console.log(`[ScaleMind] ${event}`, data ?? '')
+  // Envia para /api/track em background — não bloqueia a UI
+  fetch('/api/track', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ event, data }),
+  }).catch(() => {}) // silencia erros de rede
 }
 
 // ─── Placeholder de pagamento ─────────────────────────────────────────────────
 
 function handleUpgrade(origem: string) {
-  track('clicou_upgrade', { origem })
-  // TODO: integrar Stripe — redirecionar para /upgrade ou abrir checkout
+  track('upgrade_click', { origem })
   alert('Em breve! Você será notificado quando o plano Premium estiver disponível.')
+}
+
+async function submitWaitlist(email: string, source: string) {
+  try {
+    const res = await fetch('/api/waitlist', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, source }),
+    })
+    return await res.json()
+  } catch {
+    return null
+  }
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -426,6 +443,7 @@ function PremiumBlur({ ideia }: { ideia: Ideia }) {
                 onClick={() => {
                   if (!email) return
                   track('clicou_upgrade', { origem: 'premium_blur' })
+                  submitWaitlist(email, 'premium_blur')
                   handleUpgrade('premium_blur')
                   setSent(true)
                 }}
@@ -491,6 +509,7 @@ function UpgradeWall() {
             onClick={() => {
               if (!email) return
               track('clicou_upgrade', { origem: 'upgrade_wall' })
+              submitWaitlist(email, 'upgrade_wall')
               handleUpgrade('upgrade_wall')
               setSent(true)
             }}
