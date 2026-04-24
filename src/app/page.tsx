@@ -54,9 +54,9 @@ export default function HomePage() {
             className="px-8 py-4 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 text-base">
             📚 Ver todos os artigos
           </Link>
-          <Link href="/blog?categoria=MicroSaaS"
+          <Link href="/ferramentas/gerador-microsaas"
             className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-800 font-bold rounded-xl border-2 border-gray-200 hover:border-sky-300 transition-all text-base">
-            🚀 Ideias de MicroSaaS
+            🚀 Gerar ideia de MicroSaaS
           </Link>
         </div>
 
@@ -101,9 +101,9 @@ export default function HomePage() {
           <p className="text-violet-100 mb-8 max-w-xl mx-auto text-lg">
             Gere ideias validadas de MicroSaaS para o seu nicho em segundos, usando IA.
           </p>
-          <Link href="/blog?categoria=MicroSaaS"
+          <Link href="/ferramentas/gerador-microsaas"
             className="inline-block px-8 py-4 bg-white text-violet-700 font-bold rounded-xl hover:bg-violet-50 transition-colors text-base shadow-lg">
-            Ver artigos sobre MicroSaaS →
+            🚀 Gerar minha ideia agora →
           </Link>
         </div>
       </section>
