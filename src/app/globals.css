@@ -5,24 +5,57 @@
 @tailwind utilities;
 
 @layer base {
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', system-ui, sans-serif; }
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #f9fafb;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Dark mode via CSS puro — sem JavaScript, sem hydration mismatch */
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #030712;
+      color: #f3f4f6;
+    }
+  }
+
+  ::selection {
+    background-color: #bae6fd;
+    color: #0c4a6e;
+  }
 }
 
 @layer components {
-  .prose-content h2 { @apply text-2xl font-bold mt-10 mb-4 text-gray-900; }
-  .prose-content h3 { @apply text-xl font-bold mt-8 mb-3 text-gray-900; }
-  .prose-content p  { @apply text-gray-700 leading-relaxed mb-4; }
-  .prose-content ul { @apply my-4 space-y-1 pl-5 list-disc; }
-  .prose-content ol { @apply my-4 space-y-1 pl-5 list-decimal; }
-  .prose-content li { @apply text-gray-700; }
+  /* Conteúdo dos posts */
+  .prose-content h1 { @apply text-3xl font-extrabold mt-10 mb-4 text-gray-900 leading-tight; }
+  .prose-content h2 { @apply text-2xl font-bold mt-10 mb-4 text-gray-900 leading-snug; }
+  .prose-content h3 { @apply text-xl font-bold mt-8 mb-3 text-gray-800; }
+  .prose-content h4 { @apply text-lg font-semibold mt-6 mb-2 text-gray-800; }
+  .prose-content p  { @apply text-gray-700 leading-relaxed mb-5 text-base; }
+  .prose-content ul { @apply my-4 pl-5 list-disc space-y-2; }
+  .prose-content ol { @apply my-4 pl-5 list-decimal space-y-2; }
+  .prose-content li { @apply text-gray-700 leading-relaxed; }
   .prose-content strong { @apply font-semibold text-gray-900; }
-  .prose-content a  { @apply text-sky-600 hover:underline; }
-  .prose-content blockquote { @apply border-l-4 border-sky-500 pl-4 italic text-gray-600 my-6; }
-  .prose-content hr { @apply my-8 border-gray-200; }
-  .prose-content table { @apply w-full border-collapse my-6 text-sm; }
-  .prose-content th,
-  .prose-content td { @apply border border-gray-200 px-4 py-2; }
-  .prose-content th { @apply bg-gray-50 font-semibold; }
-  .prose-content code { @apply bg-gray-100 text-sky-700 px-1.5 py-0.5 rounded text-sm font-mono; }
+  .prose-content em { @apply italic text-gray-700; }
+  .prose-content a  { @apply text-sky-600 font-medium hover:text-sky-700 hover:underline transition-colors; }
+  .prose-content blockquote {
+    @apply border-l-4 border-sky-500 pl-5 py-1 italic text-gray-600 my-6 bg-sky-50 rounded-r-lg;
+  }
+  .prose-content hr { @apply my-10 border-gray-200; }
+  .prose-content table { @apply w-full border-collapse my-6 text-sm shadow-sm rounded-lg overflow-hidden; }
+  .prose-content th { @apply bg-gray-900 text-white font-semibold px-4 py-3 text-left; }
+  .prose-content td { @apply border-b border-gray-200 px-4 py-3 text-gray-700; }
+  .prose-content tr:last-child td { @apply border-b-0; }
+  .prose-content tr:nth-child(even) td { @apply bg-gray-50; }
+  .prose-content code {
+    @apply bg-gray-100 text-sky-700 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+  .prose-content pre {
+    @apply bg-gray-900 text-gray-100 p-4 rounded-xl my-6 overflow-x-auto text-sm;
+  }
 }
