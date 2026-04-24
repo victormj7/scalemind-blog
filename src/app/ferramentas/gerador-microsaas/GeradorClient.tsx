@@ -37,15 +37,29 @@ const DIFICULDADE_STYLE: Record<string, string> = {
   'Alto':  'bg-red-100 text-red-700',
 }
 
+// ─── Tracking simples ─────────────────────────────────────────────────────────
+
+function track(event: string, data?: Record<string, unknown>) {
+  console.log(`[ScaleMind] ${event}`, data ?? '')
+}
+
+// ─── Placeholder de pagamento ─────────────────────────────────────────────────
+
+function handleUpgrade(origem: string) {
+  track('clicou_upgrade', { origem })
+  // TODO: integrar Stripe — redirecionar para /upgrade ou abrir checkout
+  alert('Em breve! Você será notificado quando o plano Premium estiver disponível.')
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export function GeradorClient() {
-  const [step,      setStep]      = useState<'form' | 'result'>('form')
-  const [loading,   setLoading]   = useState(false)
-  const [loadMsg,   setLoadMsg]   = useState(0)
-  const [response,  setResponse]  = useState<ApiResponse | null>(null)
-  const [error,     setError]     = useState<string | null>(null)
-  const [usage,     setUsage]     = useState({ used: 0, limit: 3, remaining: 3 })
+  const [step,     setStep]     = useState<'form' | 'result'>('form')
+  const [loading,  setLoading]  = useState(false)
+  const [loadMsg,  setLoadMsg]  = useState(0)
+  const [response, setResponse] = useState<ApiResponse | null>(null)
+  const [error,    setError]    = useState<string | null>(null)
+  const [usage,    setUsage]    = useState({ used: 0, limit: 3, remaining: 3 })
   const resultRef = useRef<HTMLDivElement>(null)
 
   const [profile, setProfile] = useState<UserProfile>({
@@ -55,7 +69,6 @@ export function GeradorClient() {
     time:      'pouco',
   })
 
-  // Carregar uso do localStorage
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
     try {
@@ -72,7 +85,6 @@ export function GeradorClient() {
     } catch {}
   }, [])
 
-  // Rotacionar mensagens de loading
   useEffect(() => {
     if (!loading) return
     const t = setInterval(() => setLoadMsg(p => (p + 1) % LOADING_MSGS.length), 1400)
@@ -96,6 +108,7 @@ export function GeradorClient() {
       const data: ApiResponse = await res.json()
 
       if (res.status === 429) {
+        track('atingiu_limite')
         setUsage(u => ({ ...u, remaining: 0, used: u.limit }))
         return
       }
@@ -107,8 +120,8 @@ export function GeradorClient() {
 
       setResponse(data)
       setUsage(data.usage)
+      track('gerou_ideia', { area: profile.area, source: data.source })
 
-      // Persistir no localStorage
       try {
         const today = new Date().toISOString().split('T')[0]
         localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: data.usage.used }))
@@ -125,6 +138,7 @@ export function GeradorClient() {
   }
 
   if (usage.remaining <= 0 && step !== 'result') {
+    track('atingiu_limite')
     return <UpgradeWall />
   }
 
@@ -178,7 +192,6 @@ function Formulario({ profile, setProfile, loading, loadMsg, error, usage, onGen
       </div>
 
       <div className="p-6 space-y-7">
-        {/* Área */}
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">
             1. Qual é sua área de interesse ou experiência?
@@ -193,51 +206,29 @@ function Formulario({ profile, setProfile, loading, loadMsg, error, usage, onGen
           <p className="text-xs text-gray-400 mt-1">Pode ser qualquer área — não precisa ser tecnologia</p>
         </div>
 
-        {/* Nível */}
-        <OpcaoGrupo
-          label="2. Qual é seu nível de conhecimento técnico?"
-          opcoes={LEVELS}
-          valor={profile.level}
-          onChange={v => setProfile(p => ({ ...p, level: v as UserProfile['level'] }))}
-          corAtiva="border-sky-500 bg-sky-50"
-        />
+        <OpcaoGrupo label="2. Qual é seu nível de conhecimento técnico?" opcoes={LEVELS}
+          valor={profile.level} onChange={v => setProfile(p => ({ ...p, level: v as UserProfile['level'] }))}
+          corAtiva="border-sky-500 bg-sky-50" />
 
-        {/* Objetivo */}
-        <OpcaoGrupo
-          label="3. Qual é seu objetivo principal?"
-          opcoes={OBJECTIVES}
-          valor={profile.objective}
-          onChange={v => setProfile(p => ({ ...p, objective: v as UserProfile['objective'] }))}
-          corAtiva="border-violet-500 bg-violet-50"
-        />
+        <OpcaoGrupo label="3. Qual é seu objetivo principal?" opcoes={OBJECTIVES}
+          valor={profile.objective} onChange={v => setProfile(p => ({ ...p, objective: v as UserProfile['objective'] }))}
+          corAtiva="border-violet-500 bg-violet-50" />
 
-        {/* Tempo */}
-        <OpcaoGrupo
-          label="4. Quanto tempo você tem disponível?"
-          opcoes={TIMES}
-          valor={profile.time}
-          onChange={v => setProfile(p => ({ ...p, time: v as UserProfile['time'] }))}
-          corAtiva="border-emerald-500 bg-emerald-50"
-        />
+        <OpcaoGrupo label="4. Quanto tempo você tem disponível?" opcoes={TIMES}
+          valor={profile.time} onChange={v => setProfile(p => ({ ...p, time: v as UserProfile['time'] }))}
+          corAtiva="border-emerald-500 bg-emerald-50" />
 
-        {error && (
-          <p className="text-red-500 text-sm bg-red-50 rounded-lg px-4 py-2">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-sm bg-red-50 rounded-lg px-4 py-2">{error}</p>}
 
-        <button
-          onClick={onGenerate}
-          disabled={loading}
-          className="w-full py-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 text-white font-extrabold rounded-xl transition-all text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:translate-y-0"
-        >
+        <button onClick={onGenerate} disabled={loading}
+          className="w-full py-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 text-white font-extrabold rounded-xl transition-all text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:translate-y-0">
           {loading ? (
             <span className="flex flex-col items-center gap-1">
               <span className="flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Gerando sua ideia personalizada...
               </span>
-              <span className="text-xs text-sky-200 font-normal animate-pulse">
-                {LOADING_MSGS[loadMsg]}
-              </span>
+              <span className="text-xs text-sky-200 font-normal animate-pulse">{LOADING_MSGS[loadMsg]}</span>
             </span>
           ) : (
             `🚀 Gerar minha ideia (${usage.remaining} restante${usage.remaining !== 1 ? 's' : ''})`
@@ -251,11 +242,8 @@ function Formulario({ profile, setProfile, loading, loadMsg, error, usage, onGen
 // ─── Grupo de opções ──────────────────────────────────────────────────────────
 
 function OpcaoGrupo({ label, opcoes, valor, onChange, corAtiva }: {
-  label:    string
-  opcoes:   { value: string; label: string; desc: string }[]
-  valor:    string
-  onChange: (v: string) => void
-  corAtiva: string
+  label: string; opcoes: { value: string; label: string; desc: string }[]
+  valor: string; onChange: (v: string) => void; corAtiva: string
 }) {
   return (
     <div>
@@ -263,9 +251,7 @@ function OpcaoGrupo({ label, opcoes, valor, onChange, corAtiva }: {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {opcoes.map(({ value, label, desc }) => (
           <button key={value} onClick={() => onChange(value)}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${
-              valor === value ? corAtiva : 'border-gray-100 hover:border-gray-200 bg-gray-50'
-            }`}>
+            className={`p-4 rounded-xl border-2 text-left transition-all ${valor === value ? corAtiva : 'border-gray-100 hover:border-gray-200 bg-gray-50'}`}>
             <div className="font-bold text-sm text-gray-800">{label}</div>
             <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
           </button>
@@ -307,26 +293,18 @@ function IdeaCard({ ideia, source, fallback }: { ideia: Ideia; source: string; f
   const [copied, setCopied] = useState(false)
 
   function copiar() {
-    const text = [
-      `💡 ${ideia.nome}`,
-      ``,
-      `📝 ${ideia.descricao}`,
-      `🎯 Problema: ${ideia.problema}`,
-      `👥 Público: ${ideia.publico}`,
-      `📈 Receita: ${ideia.receita}`,
-    ].join('\n')
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
+    const text = [`💡 ${ideia.nome}`, ``, `📝 ${ideia.descricao}`,
+      `🎯 Problema: ${ideia.problema}`, `👥 Público: ${ideia.publico}`,
+      `📈 Receita: ${ideia.receita}`].join('\n')
+    navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
   }
 
   return (
     <div className="bg-white rounded-2xl border-2 border-sky-200 shadow-xl overflow-hidden">
 
-      {/* Header */}
+      {/* Header com receita em destaque máximo */}
       <div className="bg-gradient-to-br from-sky-600 to-violet-700 p-6 text-white">
-        <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex items-start justify-between gap-3 mb-3">
           <div>
             {source === 'ai' && !fallback && (
               <span className="inline-block bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2">
@@ -339,22 +317,21 @@ function IdeaCard({ ideia, source, fallback }: { ideia: Ideia; source: string; f
             {ideia.dificuldade}
           </span>
         </div>
-        <p className="text-sky-100 text-sm leading-relaxed">{ideia.descricao}</p>
-        <div className="mt-3 flex items-center gap-3 flex-wrap">
-          <div className="inline-block bg-white/15 rounded-lg px-3 py-1.5">
-            <span className="text-white font-bold text-sm">📈 {ideia.receita}</span>
-          </div>
-          <div className="inline-block bg-emerald-400/20 rounded-lg px-3 py-1.5">
-            <span className="text-emerald-200 font-bold text-sm">⚡ Fácil de executar</span>
-          </div>
+        <p className="text-sky-100 text-sm leading-relaxed mb-4">{ideia.descricao}</p>
+
+        {/* Receita em destaque — elemento mais visível */}
+        <div className="bg-white/15 border border-white/25 rounded-xl p-4">
+          <p className="text-sky-200 text-xs font-bold uppercase tracking-wider mb-1">💰 Potencial de receita</p>
+          <p className="text-white text-2xl font-extrabold">{ideia.receita}</p>
+          <p className="text-sky-200 text-xs mt-1">estimativa mensal realista para o mercado brasileiro</p>
         </div>
       </div>
 
-      {/* Preview — visível para todos */}
+      {/* Preview gratuito */}
       <div className="divide-y divide-gray-50">
         {[
-          { icon: '🎯', label: 'Problema que resolve', value: ideia.problema,  bg: 'bg-red-50' },
-          { icon: '👥', label: 'Público-alvo',         value: ideia.publico,   bg: 'bg-blue-50' },
+          { icon: '🎯', label: 'Problema que resolve', value: ideia.problema, bg: 'bg-red-50' },
+          { icon: '👥', label: 'Público-alvo',         value: ideia.publico,  bg: 'bg-blue-50' },
         ].map(({ icon, label, value, bg }) => (
           <div key={label} className={`flex gap-4 p-5 ${bg}`}>
             <span className="text-2xl shrink-0">{icon}</span>
@@ -366,7 +343,20 @@ function IdeaCard({ ideia, source, fallback }: { ideia: Ideia; source: string; f
         ))}
       </div>
 
-      {/* Conteúdo premium com blur */}
+      {/* Prova de valor — primeiro passo visível antes do blur */}
+      <div className="bg-emerald-50 border-t border-emerald-100 p-5">
+        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">
+          ✅ Exemplo de como começar:
+        </p>
+        <p className="text-gray-800 text-sm leading-relaxed font-medium">
+          {ideia.passos[0]}
+        </p>
+        <p className="text-xs text-emerald-600 mt-2 font-semibold">
+          + 3 passos completos desbloqueados no Premium
+        </p>
+      </div>
+
+      {/* Blur premium */}
       <PremiumBlur ideia={ideia} />
 
       {/* Ações */}
@@ -392,18 +382,16 @@ function PremiumBlur({ ideia }: { ideia: Ideia }) {
   const [email, setEmail] = useState('')
   const [sent,  setSent]  = useState(false)
 
-  // Preview parcial do conteúdo bloqueado
-  const preview = [
-    { icon: '💰', label: 'Como monetizar',    value: ideia.monetizacao, bg: 'bg-emerald-50' },
-    { icon: '🚀', label: 'Passo a passo',     value: ideia.passos[0] + '...', bg: 'bg-violet-50' },
-    { icon: '🧪', label: 'Como validar',      value: ideia.validacao,   bg: 'bg-amber-50' },
-  ]
-
   return (
     <div className="relative">
       {/* Conteúdo borrado */}
       <div className="select-none pointer-events-none blur-sm">
-        {preview.map(({ icon, label, value, bg }) => (
+        {[
+          { icon: '💰', label: 'Como monetizar',  value: ideia.monetizacao,     bg: 'bg-emerald-50' },
+          { icon: '🧪', label: 'Como validar',    value: ideia.validacao,       bg: 'bg-amber-50' },
+          { icon: '🤖', label: 'Como usar IA',    value: ideia.ia,              bg: 'bg-sky-50' },
+          { icon: '🧩', label: 'Sem programar',   value: ideia.iniciante,       bg: 'bg-violet-50' },
+        ].map(({ icon, label, value, bg }) => (
           <div key={label} className={`flex gap-4 p-5 ${bg}`}>
             <span className="text-2xl shrink-0">{icon}</span>
             <div>
@@ -415,25 +403,34 @@ function PremiumBlur({ ideia }: { ideia: Ideia }) {
       </div>
 
       {/* Overlay de conversão */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-white/90 to-white flex items-center justify-center px-6 py-8">
+      <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/85 to-white flex items-end justify-center px-6 pb-8 pt-16">
         <div className="text-center max-w-sm w-full">
-          <div className="text-4xl mb-3">🔓</div>
-          <h3 className="text-xl font-extrabold text-gray-900 mb-2">
-            Você acabou de ver o potencial
-          </h3>
-          <p className="text-gray-600 text-sm mb-5 leading-relaxed">
-            Desbloqueie a ideia completa para ver{' '}
-            <strong>exatamente como transformar isso em dinheiro</strong> — monetização, passo a passo e validação.
-          </p>
+
+          {/* Mensagem forte de receita */}
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-5">
+            <p className="text-emerald-800 font-extrabold text-base leading-snug">
+              💰 Essa ideia pode gerar entre{' '}
+              <span className="text-emerald-600">{ideia.receita}</span>
+            </p>
+            <p className="text-emerald-700 text-sm mt-1">
+              Você já viu o começo… agora veja exatamente como executar.
+            </p>
+          </div>
 
           {!sent ? (
             <div className="space-y-3">
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-sky-500 focus:outline-none text-sm" />
-              <button onClick={() => { if (email) setSent(true) }}
-                className="w-full py-3.5 bg-gradient-to-r from-sky-600 to-violet-600 hover:from-sky-500 hover:to-violet-500 text-white font-extrabold rounded-xl transition-all shadow-lg hover:-translate-y-0.5 text-sm">
-                🚀 Desbloquear ideias completas
+              <button
+                onClick={() => {
+                  if (!email) return
+                  track('clicou_upgrade', { origem: 'premium_blur' })
+                  handleUpgrade('premium_blur')
+                  setSent(true)
+                }}
+                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-sky-600 hover:from-emerald-400 hover:to-sky-500 text-white font-extrabold rounded-xl transition-all shadow-lg hover:shadow-emerald-200 hover:-translate-y-0.5 text-base">
+                🚀 Quero ver como ganhar dinheiro com isso
               </button>
               <p className="text-xs text-gray-400">Em breve · Seja notificado primeiro</p>
             </div>
@@ -449,7 +446,7 @@ function PremiumBlur({ ideia }: { ideia: Ideia }) {
   )
 }
 
-// ─── Tela de upgrade ──────────────────────────────────────────────────────────
+// ─── Tela de upgrade (limite atingido) ────────────────────────────────────────
 
 function UpgradeWall() {
   const [email, setEmail] = useState('')
@@ -477,8 +474,8 @@ function UpgradeWall() {
             </p>
           ))}
         </div>
-        <div className="bg-sky-500/10 border border-sky-500/30 rounded-xl p-4">
-          <p className="font-bold text-sky-400 mb-3">💎 Premium</p>
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+          <p className="font-bold text-emerald-400 mb-3">💎 Premium</p>
           {['Nome', 'Problema', 'Público', '✅ Monetização', '✅ Passo a passo', '✅ Validação', '✅ IA e automação', '✅ Sem código'].map(i => (
             <p key={i} className="text-xs py-1 text-gray-200">{i}</p>
           ))}
@@ -487,22 +484,25 @@ function UpgradeWall() {
 
       {!sent ? (
         <div className="space-y-3">
-          <p className="text-center text-sm text-gray-300 font-medium">
-            Entre na lista de espera:
-          </p>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)}
             placeholder="seu@email.com"
-            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm" />
-          <button onClick={() => { if (email) setSent(true) }}
-            className="w-full py-4 bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-400 hover:to-violet-400 text-white font-extrabold rounded-xl transition-all shadow-lg hover:-translate-y-0.5">
+            className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
+          <button
+            onClick={() => {
+              if (!email) return
+              track('clicou_upgrade', { origem: 'upgrade_wall' })
+              handleUpgrade('upgrade_wall')
+              setSent(true)
+            }}
+            className="w-full py-4 bg-gradient-to-r from-emerald-500 to-sky-500 hover:from-emerald-400 hover:to-sky-400 text-white font-extrabold rounded-xl transition-all shadow-lg hover:-translate-y-0.5 text-base">
             🚀 Desbloquear ideias ilimitadas
           </button>
+          <p className="text-center text-xs text-gray-500">Volte amanhã para mais 3 ideias gratuitas</p>
         </div>
       ) : (
         <div className="text-center py-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
           <p className="text-emerald-400 font-bold text-lg">🎉 Você está na lista!</p>
           <p className="text-gray-400 text-sm mt-1">Avisaremos quando o Premium estiver disponível.</p>
-          <p className="text-gray-500 text-xs mt-3">Volte amanhã para mais 3 ideias gratuitas</p>
         </div>
       )}
     </div>
