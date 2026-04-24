@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateIdea } from '@/lib/ideas'
+import { validateNiche } from '@/lib/validation'
 
-// Rate limiting em memória (reseta quando o servidor reinicia)
-// Para produção real, use Redis ou Supabase
-const usageMap = new Map<string, { count: number; date: string }>()
-
+// Rate limiting persistente por cookie (funciona sem Redis)
+// O middleware já aplica rate limiting por IP na camada de Edge
 const FREE_LIMIT = 3
 
 function getToday(): string {
@@ -13,11 +12,14 @@ function getToday(): string {
 
 function getClientIP(req: NextRequest): string {
   return (
-    req.headers.get('x-forwarded-for')?.split(',')[0] ??
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     req.headers.get('x-real-ip') ??
     'anonymous'
   )
 }
+
+// Store em memória — para produção use Upstash Redis
+const usageMap = new Map<string, { count: number; date: string }>()
 
 export async function POST(req: NextRequest) {
   const ip    = getClientIP(req)
@@ -35,11 +37,11 @@ export async function POST(req: NextRequest) {
     }, { status: 429 })
   }
 
-  // Parse do body
+  // Parse do body com validação
   let niche: string | undefined
   try {
     const body = await req.json()
-    niche = body.niche
+    niche = validateNiche(body.niche)
   } catch {
     niche = undefined
   }

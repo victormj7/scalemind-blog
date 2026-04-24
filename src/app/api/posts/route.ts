@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { validatePostPayload, ValidationError, safeCompare } from '@/lib/validation'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -120,9 +121,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  if (headerKey !== apiKey) {
+  if (!safeCompare(headerKey ?? '', apiKey)) {
     return NextResponse.json(
-      { error: 'Não autorizado. x-api-key inválida.' },
+      { error: 'Não autorizado.' },
       { status: 401 }
     )
   }
@@ -139,33 +140,25 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 3. Parse do body
-  let payload: PostPayload
+  // 3. Parse e validação do body
+  let payload: ReturnType<typeof validatePostPayload>
   try {
-    payload = await req.json()
-  } catch {
+    const body = await req.json()
+    payload = validatePostPayload(body)
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      return NextResponse.json(
+        { error: err.message, field: err.field },
+        { status: 400 }
+      )
+    }
     return NextResponse.json(
       { error: 'Body inválido. Envie um JSON válido.' },
       { status: 400 }
     )
   }
 
-  // 4. Validações obrigatórias
-  if (!payload.title?.trim()) {
-    return NextResponse.json(
-      { error: 'Campo "title" é obrigatório.' },
-      { status: 400 }
-    )
-  }
-
-  if (!payload.content?.trim()) {
-    return NextResponse.json(
-      { error: 'Campo "content" é obrigatório.' },
-      { status: 400 }
-    )
-  }
-
-  // 5. Gerar slug
+  // 4. Gerar slug
   const slug = generateSlug(payload.title)
 
   if (!slug) {
@@ -220,7 +213,7 @@ export async function GET(req: NextRequest) {
   const apiKey    = process.env.API_KEY
   const headerKey = req.headers.get('x-api-key')
 
-  if (!apiKey || headerKey !== apiKey) {
+  if (!safeCompare(headerKey ?? '', apiKey ?? '')) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
