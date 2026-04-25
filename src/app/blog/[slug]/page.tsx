@@ -118,6 +118,21 @@ export default async function PostPage({ params }: PostPageProps) {
           {/* AdSense meio */}
           <AdBanner slot="mid-content" className="my-10" />
 
+          {/* CTA Gerador */}
+          <div className="my-10 bg-gradient-to-br from-sky-50 to-violet-50 border-2 border-sky-200 rounded-2xl p-8 text-center">
+            <p className="text-2xl mb-2">🚀</p>
+            <h3 className="text-xl font-extrabold text-gray-900 mb-2">
+              Quer uma ideia pronta pra você?
+            </h3>
+            <p className="text-gray-600 text-sm mb-5">
+              Use nosso gerador gratuito e receba uma ideia de negócio personalizada com potencial de receita real.
+            </p>
+            <Link href="/ferramentas/gerador-microsaas"
+              className="inline-block px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl transition-colors shadow-md">
+              Gerar ideia grátis
+            </Link>
+          </div>
+
           {/* Compartilhamento */}
           <div className="mt-10 pt-6 border-t border-gray-200">
             <ShareButtons title={p.title} slug={p.slug} />
@@ -143,11 +158,11 @@ export default async function PostPage({ params }: PostPageProps) {
 
           {/* CTA Newsletter */}
           <div className="bg-gradient-to-br from-sky-600 to-violet-600 rounded-2xl p-6 text-white text-center">
-            <p className="font-bold mb-2">📬 Newsletter semanal</p>
-            <p className="text-xs text-sky-100 mb-4">Estratégias de renda online toda semana.</p>
-            <Link href="/#newsletter"
+            <p className="font-bold mb-2">🚀 Gerador de ideias</p>
+            <p className="text-xs text-sky-100 mb-4">Descubra uma ideia de negócio personalizada para você.</p>
+            <Link href="/ferramentas/gerador-microsaas"
               className="block w-full py-2 bg-white text-sky-700 font-bold rounded-xl text-sm hover:bg-sky-50 transition-colors">
-              Quero receber
+              Gerar ideia grátis
             </Link>
           </div>
         </aside>

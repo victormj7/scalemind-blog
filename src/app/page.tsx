@@ -19,7 +19,7 @@ export default function HomePage() {
   const STATS = [
     { value: `${total}+`,   label: 'Artigos publicados' },
     { value: '🔥 847',      label: 'Ideias já geradas' },
-    { value: 'No-code',     label: 'Sem precisar programar' },
+    { value: '👥 312',      label: 'Usuários testando' },
     { value: '100%',        label: 'Conteúdo gratuito' },
   ]
 
@@ -33,30 +33,30 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-4 pt-16 pb-12 text-center">
         <div className="inline-flex items-center gap-2 bg-sky-50 text-sky-700 text-xs font-semibold px-4 py-2 rounded-full mb-8 border border-sky-100">
           <span className="w-2 h-2 bg-sky-500 rounded-full animate-pulse" />
-          Novo artigo toda semana — totalmente gratuito
+          🔥 Mais de 847 ideias já geradas · 100% gratuito
         </div>
 
         <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6 tracking-tight">
-          Aprenda a ganhar dinheiro com{' '}
+          Descubra ideias de negócios que podem{' '}
           <span className="bg-gradient-to-r from-sky-500 to-violet-600 bg-clip-text text-transparent">
-            IA e automação
+            gerar renda
           </span>
-          <br />mesmo começando do zero
+          <br />usando IA e automação
         </h1>
 
         <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Guias práticos e diretos sobre MicroSaaS, automação no-code e renda online.
-          Sem enrolação, sem promessas falsas — só o que realmente funciona.
+          Gere ideias de MicroSaaS, automações e negócios digitais prontos para monetizar.
+          Qualquer pessoa pode usar — mesmo sem saber programar.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
           <Link href="/ferramentas/gerador-microsaas"
             className="px-8 py-4 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 text-base">
-            🚀 Gerar ideia de MicroSaaS grátis
+            🚀 Gerar ideia grátis agora
           </Link>
-          <Link href="/blog"
+          <Link href="#como-funciona"
             className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-800 font-bold rounded-xl border-2 border-gray-200 hover:border-sky-300 transition-all text-base">
-            📚 Ver todos os artigos
+            Ver como funciona
           </Link>
         </div>
 
@@ -107,7 +107,7 @@ export default function HomePage() {
       </section>
 
       {/* CATEGORIAS */}
-      <section className="max-w-6xl mx-auto px-4 py-16">
+      <section id="como-funciona" className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <span className="text-xs font-bold text-sky-600 uppercase tracking-widest">Explore</span>
           <h2 className="text-2xl font-extrabold text-gray-900 mt-1">O que você quer aprender?</h2>
