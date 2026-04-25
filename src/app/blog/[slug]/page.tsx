@@ -8,6 +8,7 @@ import { CategoryBadge } from '@/components/ui/CategoryBadge'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import { PostCard } from '@/components/ui/PostCard'
+import { CtaBox } from '@/components/ui/CtaBox'
 
 interface PostPageProps {
   params: Promise<{ slug: string }>
@@ -53,14 +54,14 @@ function ShareButtons({ title, slug }: { title: string; slug: string }) {
 
   return (
     <div className="flex items-center gap-4 flex-wrap">
-      <span className="text-sm font-medium text-gray-500">Compartilhar:</span>
+      <span className="text-sm font-semibold text-gray-500">Compartilhar:</span>
       {[
-        { label: 'Twitter/X', href: `https://twitter.com/intent/tweet?text=${text}&url=${url}`, color: 'hover:text-sky-500' },
+        { label: '𝕏 Twitter', href: `https://twitter.com/intent/tweet?text=${text}&url=${url}`, color: 'hover:text-sky-500' },
         { label: 'LinkedIn',  href: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`, color: 'hover:text-blue-600' },
         { label: 'WhatsApp',  href: `https://wa.me/?text=${text}%20${url}`, color: 'hover:text-green-500' },
       ].map(({ label, href, color }) => (
         <a key={label} href={href} target="_blank" rel="noopener noreferrer"
-          className={`text-sm font-medium text-gray-500 ${color} transition-colors`}>
+          className={`text-sm font-semibold text-gray-500 ${color} transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100`}>
           {label}
         </a>
       ))}
@@ -78,14 +79,15 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <AdBanner slot="top" className="mb-8" />
+      <AdBanner slot="top" className="mb-10" />
 
-      <div className="flex flex-col lg:flex-row gap-10">
+      <div className="flex flex-col lg:flex-row gap-12">
+
         {/* Conteúdo principal */}
         <article className="flex-1 min-w-0">
 
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+          <nav className="flex items-center gap-2 text-sm text-gray-400 mb-8">
             <Link href="/" className="hover:text-sky-600 transition-colors">Home</Link>
             <span>/</span>
             <Link href="/blog" className="hover:text-sky-600 transition-colors">Blog</Link>
@@ -94,44 +96,44 @@ export default async function PostPage({ params }: PostPageProps) {
           </nav>
 
           {/* Header */}
-          <header className="mb-8">
+          <header className="mb-10">
             <CategoryBadge category={p.category} />
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-4 mb-4 leading-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mt-4 mb-5 leading-tight tracking-tight">
               {p.title}
             </h1>
-            <p className="text-lg text-gray-600 mb-5 leading-relaxed">{p.description}</p>
-            <div className="flex items-center gap-4 text-sm text-gray-400">
-              <time dateTime={p.date}>{formatDate(p.date)}</time>
+            <p className="text-xl text-gray-600 mb-6 leading-relaxed">{p.description}</p>
+            <div className="flex items-center gap-3 text-sm text-gray-400">
+              <time dateTime={p.date} className="font-medium">{formatDate(p.date)}</time>
               <span>·</span>
-              <span>{p.readingTime}</span>
+              <span className="bg-gray-100 px-2.5 py-1 rounded-full font-medium">{p.readingTime}</span>
             </div>
           </header>
 
           {/* Imagem de capa */}
-          <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden mb-10 shadow-sm">
+          <div className="relative h-64 md:h-[420px] rounded-2xl overflow-hidden mb-12 shadow-lg">
             <Image src={p.image} alt={p.title} fill className="object-cover" priority />
           </div>
 
           {/* Conteúdo */}
           <MarkdownRenderer content={p.content} />
 
-          {/* AdSense meio */}
+          {/* CTA meio do artigo */}
+          <CtaBox
+            title="Quer uma ideia pronta pra você?"
+            subtitle="Use nosso gerador gratuito e receba uma ideia de negócio personalizada com potencial de receita real — em segundos."
+            buttonText="🚀 Gerar minha ideia grátis"
+          />
+
+          {/* AdSense */}
           <AdBanner slot="mid-content" className="my-10" />
 
-          {/* CTA Gerador */}
-          <div className="my-10 bg-gradient-to-br from-sky-50 to-violet-50 border-2 border-sky-200 rounded-2xl p-8 text-center">
-            <p className="text-2xl mb-2">🚀</p>
-            <h3 className="text-xl font-extrabold text-gray-900 mb-2">
-              Quer uma ideia pronta pra você?
-            </h3>
-            <p className="text-gray-600 text-sm mb-5">
-              Use nosso gerador gratuito e receba uma ideia de negócio personalizada com potencial de receita real.
-            </p>
-            <Link href="/ferramentas/gerador-microsaas"
-              className="inline-block px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl transition-colors shadow-md">
-              Gerar ideia grátis
-            </Link>
-          </div>
+          {/* CTA final — dark */}
+          <CtaBox
+            variant="dark"
+            title="Descubra sua ideia de negócio agora"
+            subtitle="Mais de 847 empreendedores já geraram ideias aqui. Personalize para o seu nicho e veja o potencial de receita."
+            buttonText="💰 Quero ver como ganhar dinheiro com isso"
+          />
 
           {/* Compartilhamento */}
           <div className="mt-10 pt-6 border-t border-gray-200">
@@ -141,6 +143,21 @@ export default async function PostPage({ params }: PostPageProps) {
 
         {/* Sidebar */}
         <aside className="lg:w-72 shrink-0 space-y-8">
+
+          {/* CTA sticky */}
+          <div className="bg-gradient-to-br from-sky-600 to-violet-600 rounded-2xl p-6 text-white text-center sticky top-24">
+            <p className="text-2xl mb-2">🚀</p>
+            <p className="font-extrabold text-lg mb-2">Gerador de ideias</p>
+            <p className="text-xs text-sky-100 mb-5 leading-relaxed">
+              Descubra uma ideia de negócio personalizada para o seu nicho — grátis.
+            </p>
+            <Link href="/ferramentas/gerador-microsaas"
+              className="block w-full py-3 bg-white text-sky-700 font-bold rounded-xl text-sm hover:bg-sky-50 transition-all hover:shadow-md">
+              Gerar ideia grátis →
+            </Link>
+            <p className="text-xs text-sky-200 mt-3">🔥 847 ideias já geradas</p>
+          </div>
+
           <AdBanner slot="sidebar" />
 
           {related.length > 0 && (
@@ -155,16 +172,6 @@ export default async function PostPage({ params }: PostPageProps) {
               </div>
             </div>
           )}
-
-          {/* CTA Newsletter */}
-          <div className="bg-gradient-to-br from-sky-600 to-violet-600 rounded-2xl p-6 text-white text-center">
-            <p className="font-bold mb-2">🚀 Gerador de ideias</p>
-            <p className="text-xs text-sky-100 mb-4">Descubra uma ideia de negócio personalizada para você.</p>
-            <Link href="/ferramentas/gerador-microsaas"
-              className="block w-full py-2 bg-white text-sky-700 font-bold rounded-xl text-sm hover:bg-sky-50 transition-colors">
-              Gerar ideia grátis
-            </Link>
-          </div>
         </aside>
       </div>
     </div>
