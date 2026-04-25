@@ -68,7 +68,7 @@ export default function GeradorPage() {
       <div className="bg-gradient-to-r from-sky-600 to-violet-600 py-12 px-4 text-center text-white">
         <h2 className="text-2xl font-extrabold mb-3">Pronto para descobrir sua ideia?</h2>
         <p className="text-sky-100 mb-6">Mais de 847 empreendedores já geraram ideias aqui. Agora é a sua vez.</p>
-        <a href="#top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        <a href="/ferramentas/gerador-microsaas"
           className="inline-block px-8 py-4 bg-white text-sky-700 font-bold rounded-xl hover:bg-sky-50 transition-colors shadow-lg">
           🚀 Gerar minha ideia agora
         </a>
