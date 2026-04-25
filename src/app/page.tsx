@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useState } from 'react'
 import { getFeaturedPosts, getRecentPosts, getAllPosts } from '@/lib/posts'
 import { PostCard } from '@/components/ui/PostCard'
 import { AdBanner } from '@/components/ui/AdBanner'
@@ -10,17 +13,89 @@ const CATEGORIES = [
   { name: 'Renda Online', emoji: '🌐', desc: 'Trabalhe de qualquer lugar',         color: 'hover:border-amber-300 hover:bg-amber-50' },
 ]
 
-const STATS = [
-  { value: '12+',    label: 'Artigos publicados' },
-  { value: '100%',   label: 'Conteúdo gratuito' },
-  { value: 'No-code', label: 'Sem precisar programar' },
-  { value: '0→∞',    label: 'Do zero ao escalável' },
-]
+// ─── Newsletter com API real ──────────────────────────────────────────────────
+
+function NewsletterForm() {
+  const [email,   setEmail]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const [done,    setDone]    = useState(false)
+  const [error,   setError]   = useState('')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email.trim()) return
+    setLoading(true)
+    setError('')
+
+    try {
+      const res  = await fetch('/api/waitlist', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, source: 'newsletter_home' }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setDone(true)
+        // Tracking
+        fetch('/api/track', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ event: 'waitlist_signup', data: { source: 'newsletter_home' } }),
+        }).catch(() => {})
+      } else {
+        setError(data.error ?? 'Erro ao cadastrar. Tente novamente.')
+      }
+    } catch {
+      setError('Erro de conexão. Tente novamente.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (done) {
+    return (
+      <div className="max-w-md mx-auto bg-emerald-500/20 border border-emerald-400/30 rounded-2xl p-6 text-center">
+        <div className="text-3xl mb-2">🚀</div>
+        <p className="text-white font-bold text-lg">Você entrou!</p>
+        <p className="text-emerald-200 text-sm mt-1">
+          Em breve vamos te enviar ideias exclusivas de MicroSaaS direto no seu e-mail.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+      <input
+        type="email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        placeholder="seu@email.com"
+        required
+        className="flex-1 px-5 py-4 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 text-base"
+      />
+      <button type="submit" disabled={loading}
+        className="px-6 py-4 bg-sky-500 hover:bg-sky-400 disabled:bg-sky-700 text-white font-bold rounded-xl transition-colors whitespace-nowrap text-base">
+        {loading ? 'Enviando...' : 'Quero receber'}
+      </button>
+      {error && <p className="text-red-400 text-xs mt-1 w-full">{error}</p>}
+    </form>
+  )
+}
+
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   const featured = getFeaturedPosts()
   const recent   = getRecentPosts(6)
   const total    = getAllPosts().length
+
+  const STATS = [
+    { value: `${total}+`,  label: 'Artigos publicados' },
+    { value: '🔥 847',     label: 'Ideias já geradas' },
+    { value: 'No-code',    label: 'Sem precisar programar' },
+    { value: '100%',       label: 'Conteúdo gratuito' },
+  ]
 
   return (
     <>
@@ -50,17 +125,17 @@ export default function HomePage() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-          <Link href="/blog"
-            className="px-8 py-4 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 text-base">
-            📚 Ver todos os artigos
-          </Link>
           <Link href="/ferramentas/gerador-microsaas"
+            className="px-8 py-4 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 text-base">
+            🚀 Gerar ideia de MicroSaaS grátis
+          </Link>
+          <Link href="/blog"
             className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-800 font-bold rounded-xl border-2 border-gray-200 hover:border-sky-300 transition-all text-base">
-            🚀 Gerar ideia de MicroSaaS
+            📚 Ver todos os artigos
           </Link>
         </div>
 
-        {/* Stats de credibilidade */}
+        {/* Stats com contador real */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
           {STATS.map(({ value, label }) => (
             <div key={label} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
@@ -91,15 +166,20 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── BANNER MICROSAAS ── */}
+      {/* ── BANNER MICROSAAS — corrigido ── */}
       <section className="bg-gradient-to-r from-violet-600 to-sky-600 py-12">
         <div className="max-w-4xl mx-auto px-4 text-center text-white">
-          <p className="text-sm font-semibold text-violet-200 uppercase tracking-widest mb-3">Em breve</p>
+          <p className="text-sm font-semibold text-violet-200 uppercase tracking-widest mb-3">
+            ✅ Disponível agora — grátis
+          </p>
           <h2 className="text-3xl font-extrabold mb-4">
-            Ferramenta gratuita de ideias de MicroSaaS
+            Gere sua ideia de MicroSaaS com IA
           </h2>
-          <p className="text-violet-100 mb-8 max-w-xl mx-auto text-lg">
-            Gere ideias validadas de MicroSaaS para o seu nicho em segundos, usando IA.
+          <p className="text-violet-100 mb-3 max-w-xl mx-auto text-lg">
+            Informe sua área de interesse e receba uma ideia personalizada com modelo de negócio e potencial de receita.
+          </p>
+          <p className="text-violet-200 text-sm mb-8">
+            🔥 847 ideias já geradas por empreendedores como você
           </p>
           <Link href="/ferramentas/gerador-microsaas"
             className="inline-block px-8 py-4 bg-white text-violet-700 font-bold rounded-xl hover:bg-violet-50 transition-colors text-base shadow-lg">
@@ -151,35 +231,23 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── NEWSLETTER CTA ── */}
+      {/* ── NEWSLETTER — conectada à API ── */}
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="bg-gray-900 rounded-3xl p-10 md:p-16 text-center text-white relative overflow-hidden">
-          {/* Decoração de fundo */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full -translate-y-32 translate-x-32" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-500/10 rounded-full translate-y-24 -translate-x-24" />
 
           <div className="relative">
             <span className="inline-block text-4xl mb-4">📬</span>
             <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
-              Receba as melhores estratégias
-              <br />direto no seu e-mail
+              Receba ideias de MicroSaaS
+              <br />que podem gerar renda
             </h2>
             <p className="text-gray-400 mb-8 max-w-lg mx-auto text-lg">
-              Toda semana: MicroSaaS, automação e renda online.
+              Toda semana: ideias validadas, automações e estratégias de renda online.
               Conteúdo que você aplica no mesmo dia.
             </p>
-            <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                name="email"
-                placeholder="seu@email.com"
-                className="flex-1 px-5 py-4 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 text-base"
-              />
-              <button type="submit"
-                className="px-6 py-4 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-xl transition-colors whitespace-nowrap text-base">
-                Quero receber
-              </button>
-            </form>
+            <NewsletterForm />
             <p className="text-xs text-gray-500 mt-4">
               Sem spam. Cancele quando quiser. Grátis para sempre.
             </p>

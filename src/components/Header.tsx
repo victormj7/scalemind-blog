@@ -36,9 +36,9 @@ export function Header() {
 
         {/* CTA desktop */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/blog"
+          <Link href="/ferramentas/gerador-microsaas"
             className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold rounded-lg transition-colors">
-            Ver artigos →
+            🚀 Gerar ideia grátis
           </Link>
         </div>
 
@@ -59,9 +59,9 @@ export function Header() {
               {label}
             </Link>
           ))}
-          <Link href="/blog" onClick={() => setOpen(false)}
+          <Link href="/ferramentas/gerador-microsaas" onClick={() => setOpen(false)}
             className="mt-2 py-2.5 px-3 bg-sky-600 text-white text-sm font-semibold rounded-lg text-center">
-            Ver artigos →
+            🚀 Gerar ideia grátis
           </Link>
         </nav>
       )}

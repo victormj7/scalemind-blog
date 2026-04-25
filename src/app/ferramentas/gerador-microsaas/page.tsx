@@ -23,6 +23,9 @@ export default function GeradorPage() {
             Receba ideias práticas e validadas de MicroSaaS para o seu nicho.
             Cada ideia vem com modelo de negócio, público-alvo e potencial de receita.
           </p>
+          <p className="text-sky-300 text-sm mt-4 font-semibold">
+            🔥 847 ideias já geradas por empreendedores como você
+          </p>
         </div>
       </div>
 

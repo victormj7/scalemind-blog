@@ -5,13 +5,6 @@ const CATEGORIES = ['MicroSaaS', 'Automação', 'Finanças', 'Renda Online']
 export function Footer() {
   return (
     <footer className="bg-gray-950 text-gray-400 mt-20">
-      {/* AdSense Footer */}
-      <div className="max-w-6xl mx-auto px-4 py-3 border-b border-gray-800">
-        <div className="h-16 flex items-center justify-center rounded-lg border border-dashed border-gray-700 text-xs text-gray-600 font-mono">
-          AdSense · Footer Banner · 728x90
-        </div>
-      </div>
-
       <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
         {/* Brand */}
         <div className="space-y-3">

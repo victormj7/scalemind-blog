@@ -52,7 +52,8 @@ function track(event: string, data?: Record<string, unknown>) {
 
 function handleUpgrade(origem: string) {
   track('upgrade_click', { origem })
-  alert('Em breve! Você será notificado quando o plano Premium estiver disponível.')
+  // Stripe será integrado aqui futuramente
+  // Por enquanto o fluxo é capturar o e-mail e entrar na waitlist
 }
 
 async function submitWaitlist(email: string, source: string) {
@@ -440,22 +441,23 @@ function PremiumBlur({ ideia }: { ideia: Ideia }) {
                 placeholder="seu@email.com"
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-sky-500 focus:outline-none text-sm" />
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (!email) return
                   track('clicou_upgrade', { origem: 'premium_blur' })
-                  submitWaitlist(email, 'premium_blur')
+                  await submitWaitlist(email, 'premium_blur')
                   handleUpgrade('premium_blur')
                   setSent(true)
                 }}
                 className="w-full py-4 bg-gradient-to-r from-emerald-500 to-sky-600 hover:from-emerald-400 hover:to-sky-500 text-white font-extrabold rounded-xl transition-all shadow-lg hover:shadow-emerald-200 hover:-translate-y-0.5 text-base">
                 🚀 Quero ver como ganhar dinheiro com isso
               </button>
-              <p className="text-xs text-gray-400">Em breve · Seja notificado primeiro</p>
+              <p className="text-xs text-gray-400">Acesso antecipado · Seja notificado primeiro</p>
             </div>
           ) : (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-              <p className="text-emerald-700 font-bold">🎉 Você está na lista!</p>
-              <p className="text-emerald-600 text-sm mt-1">Avisaremos quando o Premium estiver disponível.</p>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center">
+              <div className="text-3xl mb-2">🚀</div>
+              <p className="text-emerald-700 font-bold text-base">Você entrou na lista de acesso antecipado!</p>
+              <p className="text-emerald-600 text-sm mt-1">Vamos te avisar quando liberar o plano completo.</p>
             </div>
           )}
         </div>
@@ -506,10 +508,10 @@ function UpgradeWall() {
             placeholder="seu@email.com"
             className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
           <button
-            onClick={() => {
+            onClick={async () => {
               if (!email) return
               track('clicou_upgrade', { origem: 'upgrade_wall' })
-              submitWaitlist(email, 'upgrade_wall')
+              await submitWaitlist(email, 'upgrade_wall')
               handleUpgrade('upgrade_wall')
               setSent(true)
             }}
@@ -519,9 +521,11 @@ function UpgradeWall() {
           <p className="text-center text-xs text-gray-500">Volte amanhã para mais 3 ideias gratuitas</p>
         </div>
       ) : (
-        <div className="text-center py-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-          <p className="text-emerald-400 font-bold text-lg">🎉 Você está na lista!</p>
-          <p className="text-gray-400 text-sm mt-1">Avisaremos quando o Premium estiver disponível.</p>
+        <div className="text-center py-6 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+          <div className="text-4xl mb-3">🚀</div>
+          <p className="text-emerald-400 font-bold text-lg">Você entrou na lista de acesso antecipado!</p>
+          <p className="text-gray-400 text-sm mt-1">Vamos te avisar quando liberar o plano completo.</p>
+          <p className="text-gray-500 text-xs mt-3">Volte amanhã para mais 3 ideias gratuitas</p>
         </div>
       )}
     </div>
