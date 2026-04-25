@@ -62,7 +62,7 @@ export default function UpgradePage() {
           </p>
           <div className="inline-block bg-white/10 border border-white/20 rounded-2xl px-8 py-6">
             <p className="text-gray-400 text-sm mb-1">Apenas</p>
-            <p className="text-5xl font-extrabold text-white">R$ 47</p>
+            <p className="text-5xl font-extrabold text-white">R$ 9,90</p>
             <p className="text-gray-400 text-sm mt-1">por mês · cancele quando quiser</p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function UpgradePage() {
         {/* Checkout */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-8">
           <h3 className="text-xl font-extrabold text-gray-900 text-center mb-6">
-            Começar agora por R$ 47/mês
+            Começar agora por R$ 9,90/mês
           </h3>
           <div className="space-y-4">
             <div>
@@ -126,7 +126,7 @@ export default function UpgradePage() {
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Redirecionando...
                 </span>
-              ) : '🚀 Assinar agora — R$ 47/mês'}
+              ) : '🚀 Assinar agora — R$ 9,90/mês'}}
             </button>
             <p className="text-xs text-gray-400 text-center">
               Pagamento seguro via Stripe · Cancele quando quiser · Sem fidelidade
