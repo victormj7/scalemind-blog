@@ -25,10 +25,11 @@ export interface Ideia {
 
 // Resposta padronizada da API
 export interface ApiResponse {
-  success:  boolean
-  fallback: boolean          // true quando usou ideia local
-  source:   'ai' | 'local'
-  data:     Ideia
+  success:   boolean
+  fallback:  boolean
+  source:    'ai' | 'local'
+  isPremium: boolean
+  data:      Ideia
   usage: {
     used:      number
     limit:     number

@@ -52,8 +52,7 @@ function track(event: string, data?: Record<string, unknown>) {
 
 function handleUpgrade(origem: string) {
   track('upgrade_click', { origem })
-  // Stripe será integrado aqui futuramente
-  // Por enquanto o fluxo é capturar o e-mail e entrar na waitlist
+  window.location.href = '/upgrade'
 }
 
 async function submitWaitlist(email: string, source: string) {
@@ -78,6 +77,7 @@ export function GeradorClient() {
   const [response, setResponse] = useState<ApiResponse | null>(null)
   const [error,    setError]    = useState<string | null>(null)
   const [usage,    setUsage]    = useState({ used: 0, limit: 3, remaining: 3 })
+  const [isPremium, setIsPremium] = useState(false)
   const resultRef = useRef<HTMLDivElement>(null)
 
   const [profile, setProfile] = useState<UserProfile>({
@@ -101,6 +101,12 @@ export function GeradorClient() {
       }
       localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: 0 }))
     } catch {}
+    // Verificar se é premium via localStorage
+    const premium = localStorage.getItem('scalemind_premium') === 'true'
+    if (premium) {
+      setIsPremium(true)
+      setUsage({ used: 0, limit: 999, remaining: 999 })
+    }
   }, [])
 
   useEffect(() => {
@@ -118,9 +124,13 @@ export function GeradorClient() {
     setLoadMsg(0)
 
     try {
+      const email = localStorage.getItem('scalemind_premium_email') ?? ''
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (email) headers['x-user-email'] = email
+
       const res  = await fetch('/api/generate-idea', {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body:    JSON.stringify(profile),
       })
       const data: ApiResponse = await res.json()
@@ -162,7 +172,7 @@ export function GeradorClient() {
 
   return (
     <div className="space-y-6">
-      <UsageBar usage={usage} />
+      <UsageBar usage={usage} isPremium={isPremium} />
 
       {step === 'form' && (
         <Formulario
@@ -281,7 +291,19 @@ function OpcaoGrupo({ label, opcoes, valor, onChange, corAtiva }: {
 
 // ─── Barra de uso ─────────────────────────────────────────────────────────────
 
-function UsageBar({ usage }: { usage: { used: number; limit: number; remaining: number } }) {
+function UsageBar({ usage, isPremium }: { usage: { used: number; limit: number; remaining: number }; isPremium: boolean }) {
+  if (isPremium) {
+    return (
+      <div className="bg-gradient-to-r from-emerald-50 to-sky-50 border-2 border-emerald-200 rounded-2xl p-4">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">💎</span>
+          <span className="text-sm font-bold text-emerald-700">Plano Premium ativo</span>
+          <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Ilimitado</span>
+        </div>
+      </div>
+    )
+  }
+
   const pct = (usage.used / usage.limit) * 100
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">

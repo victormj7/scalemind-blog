@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { UserProfile, Ideia, ApiResponse } from '@/types/generator'
 import { ideaLimiter } from '@/lib/rateLimiter'
+import { isUserPremium } from '@/lib/premiumStore'
 
 const FREE_LIMIT = 3
 
@@ -204,16 +205,21 @@ function gerarFallback(profile: UserProfile): Ideia {
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const ip     = getClientIP(req)
-  const check  = ideaLimiter.check(ip)
+  const ip      = getClientIP(req)
+  const emailHeader = req.headers.get('x-user-email')?.toLowerCase().trim()
+  const premium = emailHeader ? isUserPremium(emailHeader) : false
 
-  if (!check.allowed) {
-    return NextResponse.json({
-      success: false,
-      error:   'limit_reached',
-      limit:   FREE_LIMIT,
-      used:    FREE_LIMIT,
-    }, { status: 429 })
+  // Verificar limite apenas para usuários free
+  if (!premium) {
+    const check = ideaLimiter.check(ip)
+    if (!check.allowed) {
+      return NextResponse.json({
+        success: false,
+        error:   'limit_reached',
+        limit:   FREE_LIMIT,
+        used:    FREE_LIMIT,
+      }, { status: 429 })
+    }
   }
 
   let profile: UserProfile
@@ -229,9 +235,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Body inválido.' }, { status: 400 })
   }
 
-  // Incrementar contador com TTL
-  const newUsage = ideaLimiter.increment(ip)
-  const used     = newUsage.count
+  // Incrementar contador apenas para free
+  let used = 0
+  if (!premium) {
+    const newUsage = ideaLimiter.increment(ip)
+    used = newUsage.count
+  }
 
   // Tentar IA, fallback se falhar
   const aiIdeia = await gerarComIA(profile)
@@ -239,14 +248,15 @@ export async function POST(req: NextRequest) {
   const ideia    = aiIdeia ?? gerarFallback(profile)
 
   const response: ApiResponse = {
-    success:  true,
+    success:   true,
     fallback,
-    source:   fallback ? 'local' : 'ai',
-    data:     ideia,
+    source:    fallback ? 'local' : 'ai',
+    isPremium: premium,
+    data:      ideia,
     usage: {
-      used:      used,
+      used:      premium ? 0 : used,
       limit:     FREE_LIMIT,
-      remaining: Math.max(0, FREE_LIMIT - used),
+      remaining: premium ? 999 : Math.max(0, FREE_LIMIT - used),
     },
   }
 
