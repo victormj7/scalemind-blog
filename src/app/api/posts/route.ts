@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validatePostPayload, ValidationError, safeCompare } from '@/lib/validation'
+import { sendNewPostEmail } from '@/lib/email'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -191,6 +192,13 @@ export async function POST(req: NextRequest) {
       githubRepo,
       githubToken
     )
+
+    // Notifica por email em background — não bloqueia a resposta
+    sendNewPostEmail({
+      title:   payload.title,
+      summary: payload.description ?? payload.title,
+      slug,
+    }).catch((err) => console.error('[Email Error]', err instanceof Error ? err.message : err))
 
     return NextResponse.json({
       success: true,

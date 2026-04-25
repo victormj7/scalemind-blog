@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { buildWelcomeEmail } from '@/lib/emailTemplates'
-
-// Store em memória com deduplicação — mesma lógica da waitlist
-const subscribers = new Set<string>()
+import { addSubscriber } from '@/lib/subscribers'
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -22,10 +20,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 })
   }
 
-  const alreadySubscribed = subscribers.has(email)
-  if (!alreadySubscribed) {
-    subscribers.add(email)
-  }
+  // addSubscriber retorna false se já existia — fonte única de verdade
+  const isNew = addSubscriber(email)
 
   // Tracking
   fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://scalemind-blog.vercel.app'}/api/track`, {
@@ -34,48 +30,34 @@ export async function POST(req: NextRequest) {
     body:    JSON.stringify({ event: 'waitlist_signup', data: { source: 'newsletter', email } }),
   }).catch(() => {})
 
-  // Log estruturado
   console.log(JSON.stringify({
     type:      'NEWSLETTER_SIGNUP',
     email,
-    new:       !alreadySubscribed,
+    new:       isNew,
     timestamp: new Date().toISOString(),
-    total:     subscribers.size,
   }))
 
-  // Enviar email de boas-vindas via Resend
-  const apiKey = process.env.RESEND_API_KEY
-  const fromEmail = process.env.FROM_EMAIL ?? 'ScaleMind <onboarding@resend.dev>'
+  if (isNew) {
+    const apiKey    = process.env.RESEND_API_KEY
+    const fromEmail = process.env.FROM_EMAIL ?? 'ScaleMind <onboarding@resend.dev>'
 
-  if (apiKey && !alreadySubscribed) {
-    try {
-      const resend = new Resend(apiKey)
-      const { subject, html, text } = buildWelcomeEmail()
-
-      await resend.emails.send({
-        from:    fromEmail,
-        to:      email,
-        subject,
-        html,
-        text,
-      })
-
-      console.log(JSON.stringify({
-        type:      'EMAIL_SENT',
-        email,
-        timestamp: new Date().toISOString(),
-      }))
-    } catch (err) {
-      // Não falha o cadastro se o email não for enviado
-      console.error('[Resend Error]', err instanceof Error ? err.message : err)
+    if (apiKey) {
+      try {
+        const resend = new Resend(apiKey)
+        const { subject, html, text } = buildWelcomeEmail()
+        await resend.emails.send({ from: fromEmail, to: email, subject, html, text })
+        console.log(JSON.stringify({ type: 'EMAIL_SENT', email, timestamp: new Date().toISOString() }))
+      } catch (err) {
+        console.error('[Resend Error]', err instanceof Error ? err.message : err)
+      }
     }
   }
 
   return NextResponse.json({
-    ok:      true,
-    new:     !alreadySubscribed,
-    message: alreadySubscribed
-      ? 'Você já está cadastrado!'
-      : 'Cadastro realizado! Confira seu e-mail.',
+    ok:  true,
+    new: isNew,
+    message: isNew
+      ? 'Cadastro realizado! Confira seu e-mail.'
+      : 'Você já está cadastrado!',
   })
 }

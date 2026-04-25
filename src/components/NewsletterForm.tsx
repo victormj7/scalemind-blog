@@ -5,7 +5,7 @@ import { useState } from 'react'
 export function NewsletterForm() {
   const [email,   setEmail]   = useState('')
   const [loading, setLoading] = useState(false)
-  const [done,    setDone]    = useState(false)
+  const [done,    setDone]    = useState<'new' | 'exists' | null>(null)
   const [error,   setError]   = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
@@ -23,7 +23,7 @@ export function NewsletterForm() {
       const data = await res.json()
 
       if (res.ok) {
-        setDone(true)
+        setDone(data.new ? 'new' : 'exists')
       } else {
         setError(data.error ?? 'Erro ao cadastrar. Tente novamente.')
       }
@@ -37,10 +37,14 @@ export function NewsletterForm() {
   if (done) {
     return (
       <div className="max-w-md mx-auto bg-emerald-500/20 border border-emerald-400/30 rounded-2xl p-6 text-center">
-        <div className="text-4xl mb-3">🚀</div>
-        <p className="text-white font-bold text-lg">Você entrou!</p>
+        <div className="text-4xl mb-3">{done === 'new' ? '🚀' : '✅'}</div>
+        <p className="text-white font-bold text-lg">
+          {done === 'new' ? 'Você entrou!' : 'Você já está cadastrado!'}
+        </p>
         <p className="text-emerald-200 text-sm mt-2 leading-relaxed">
-          Confira seu e-mail — já te enviamos sua primeira ideia para ganhar dinheiro.
+          {done === 'new'
+            ? 'Confira seu email — já te enviamos uma ideia 🚀'
+            : 'Fique de olho no seu email para os próximos posts.'}
         </p>
       </div>
     )
