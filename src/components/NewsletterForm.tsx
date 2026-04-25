@@ -15,19 +15,15 @@ export function NewsletterForm() {
     setError('')
 
     try {
-      const res  = await fetch('/api/waitlist', {
+      const res  = await fetch('/api/newsletter', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email, source: 'newsletter_home' }),
+        body:    JSON.stringify({ email }),
       })
       const data = await res.json()
+
       if (res.ok) {
         setDone(true)
-        fetch('/api/track', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ event: 'waitlist_signup', data: { source: 'newsletter_home' } }),
-        }).catch(() => {})
       } else {
         setError(data.error ?? 'Erro ao cadastrar. Tente novamente.')
       }
@@ -41,30 +37,32 @@ export function NewsletterForm() {
   if (done) {
     return (
       <div className="max-w-md mx-auto bg-emerald-500/20 border border-emerald-400/30 rounded-2xl p-6 text-center">
-        <div className="text-3xl mb-2">🚀</div>
+        <div className="text-4xl mb-3">🚀</div>
         <p className="text-white font-bold text-lg">Você entrou!</p>
-        <p className="text-emerald-200 text-sm mt-1">
-          Em breve vamos te enviar ideias exclusivas de MicroSaaS direto no seu e-mail.
+        <p className="text-emerald-200 text-sm mt-2 leading-relaxed">
+          Confira seu e-mail — já te enviamos sua primeira ideia para ganhar dinheiro.
         </p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-      <input
-        type="email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        placeholder="seu@email.com"
-        required
-        className="flex-1 px-5 py-4 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 text-base"
-      />
-      <button type="submit" disabled={loading}
-        className="px-6 py-4 bg-sky-500 hover:bg-sky-400 disabled:bg-sky-700 text-white font-bold rounded-xl transition-colors whitespace-nowrap text-base">
-        {loading ? 'Enviando...' : 'Quero receber'}
-      </button>
-      {error && <p className="text-red-400 text-xs mt-1 w-full">{error}</p>}
+    <form onSubmit={handleSubmit} className="space-y-3 max-w-md mx-auto">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="seu@email.com"
+          required
+          className="flex-1 px-5 py-4 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 text-base"
+        />
+        <button type="submit" disabled={loading}
+          className="px-6 py-4 bg-sky-500 hover:bg-sky-400 disabled:bg-sky-700 text-white font-bold rounded-xl transition-colors whitespace-nowrap text-base">
+          {loading ? 'Enviando...' : 'Quero receber'}
+        </button>
+      </div>
+      {error && <p className="text-red-400 text-xs text-center">{error}</p>}
     </form>
   )
 }
