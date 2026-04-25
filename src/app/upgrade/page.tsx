@@ -126,7 +126,7 @@ export default function UpgradePage() {
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Redirecionando...
                 </span>
-              ) : '🚀 Assinar agora — R$ 9,90/mês'}}
+              ) : '🚀 Assinar agora — R$ 9,90/mês'}
             </button>
             <p className="text-xs text-gray-400 text-center">
               Pagamento seguro via Stripe · Cancele quando quiser · Sem fidelidade
