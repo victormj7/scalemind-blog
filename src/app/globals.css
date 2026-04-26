@@ -194,4 +194,88 @@
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  /* Hero gradient animado — CSS puro, zero impacto no LCP */
+  .hero-animated-bg {
+    background: linear-gradient(135deg, #0f172a 0%, #0c1a3a 25%, #0d1b4b 50%, #0f0a2e 75%, #0f172a 100%);
+    background-size: 400% 400%;
+    animation: heroGradient 12s ease infinite;
+  }
+
+  @keyframes heroGradient {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Orbs flutuantes — CSS puro */
+  .hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: orbFloat 8s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .hero-orb-1 {
+    width: 400px;
+    height: 400px;
+    background: #0ea5e9;
+    top: -100px;
+    right: -100px;
+    animation-delay: 0s;
+  }
+
+  .hero-orb-2 {
+    width: 300px;
+    height: 300px;
+    background: #7c3aed;
+    bottom: -50px;
+    left: -50px;
+    animation-delay: 3s;
+  }
+
+  .hero-orb-3 {
+    width: 200px;
+    height: 200px;
+    background: #10b981;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: 6s;
+  }
+
+  @keyframes orbFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%       { transform: translateY(-20px) scale(1.05); }
+  }
+
+  /* Grid de pontos sutil */
+  .hero-grid {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Brilho no botão CTA */
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-glow::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: rgba(255,255,255,0.15);
+    transform: skewX(-20deg);
+    transition: left 0.5s ease;
+  }
+
+  .btn-glow:hover::after {
+    left: 120%;
+  }
 }
