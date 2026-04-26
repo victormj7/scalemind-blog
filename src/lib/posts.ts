@@ -18,6 +18,11 @@ function estimateReadingTime(content: string): string {
   return `${minutes} min de leitura`
 }
 
+function sanitizeDate(date: string): string {
+  const today = new Date().toISOString().split('T')[0]
+  return date > today ? today : date
+}
+
 function parsePost(filename: string): PostMeta {
   const slug = filename.replace(/\.mdx?$/, '')
   const raw = fs.readFileSync(path.join(POSTS_DIR, path.basename(filename)), 'utf-8')
@@ -27,7 +32,7 @@ function parsePost(filename: string): PostMeta {
     slug,
     title: data.title,
     description: data.description,
-    date: data.date,
+    date: sanitizeDate(String(data.date ?? new Date().toISOString().split('T')[0])),
     category: data.category as Category,
     image: data.image ?? '/images/default-cover.jpg',
     readingTime: estimateReadingTime(content),
@@ -71,7 +76,7 @@ export function getPostBySlug(slug: string): Post | null {
     slug: safeSlug,
     title: data.title,
     description: data.description,
-    date: data.date,
+    date: sanitizeDate(String(data.date ?? new Date().toISOString().split('T')[0])),
     category: data.category as Category,
     image: data.image ?? '/images/default-cover.jpg',
     readingTime: estimateReadingTime(content),
