@@ -34,7 +34,7 @@ export function HeroSection() {
         {/* Headline principal */}
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6 tracking-tight">
           Use IA para encontrar uma{' '}
-          <span className="bg-gradient-to-r from-sky-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-sky-400 to-violet-400 bg-clip-text text-transparent" style={{ filter: 'drop-shadow(0 0 20px rgba(14,165,233,0.4))' }}>
             ideia de negócio
           </span>
           {' '}pronta pra ganhar dinheiro
