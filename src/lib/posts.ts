@@ -33,14 +33,8 @@ function parsePost(filename: string): PostMeta {
     title: data.title,
     description: data.description,
     date: sanitizeDate(String(data.date ?? new Date().toISOString().split('T')[0])),
-    category: data.category as Category,
-    image: data.image ?? '/images/default-cover.jpg',
-    readingTime: estimateReadingTime(content),
-    featured: data.featured ?? false,
-  }
-}
-
-// ─── Public API ─────────────────────────────────────────────────────────────
+    ...(data.updatedAt ? { updatedAt: sanitizeDate(String(data.updatedAt)) } : {}),
+    category: data.category as Category, ─────────────────────────────────────────────────────────────
 
 /** Retorna todos os posts ordenados por data (mais recente primeiro) */
 export function getAllPosts(): PostMeta[] {

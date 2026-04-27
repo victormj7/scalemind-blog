@@ -4,10 +4,11 @@ export interface PostMeta {
   slug: string
   title: string
   description: string
-  date: string        // ISO 8601: "2024-07-15"
+  date: string        // ISO 8601: "2024-07-15" — nunca futuro
+  updatedAt?: string  // opcional: data de atualização
   category: Category
-  image: string       // URL ou caminho em /public
-  readingTime: string // ex: "8 min de leitura"
+  image: string
+  readingTime: string
   featured?: boolean
 }
 

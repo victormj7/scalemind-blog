@@ -197,9 +197,9 @@
 
   /* Hero gradient animado — CSS puro, zero impacto no LCP */
   .hero-animated-bg {
-    background: linear-gradient(135deg, #0f172a 0%, #0c1a3a 25%, #0d1b4b 50%, #0f0a2e 75%, #0f172a 100%);
-    background-size: 400% 400%;
-    animation: heroGradient 12s ease infinite;
+    background: linear-gradient(135deg, #0f172a 0%, #0e1e3f 40%, #111827 60%, #0f172a 100%);
+    background-size: 300% 300%;
+    animation: heroGradient 16s ease infinite;
   }
 
   @keyframes heroGradient {
@@ -212,9 +212,9 @@
   .hero-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.15;
-    animation: orbFloat 8s ease-in-out infinite;
+    filter: blur(90px);
+    opacity: 0.10;
+    animation: orbFloat 10s ease-in-out infinite;
     pointer-events: none;
   }
 

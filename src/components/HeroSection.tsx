@@ -81,7 +81,7 @@ export function HeroSection() {
               <div className="flex items-center gap-1 text-amber-400 text-sm mb-3">
                 {'★★★★★'}
               </div>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">"{text}"</p>
+              <p className="text-white/75 text-sm leading-relaxed mb-4">"{text}"</p>
               <div>
                 <p className="text-white font-semibold text-sm">{name}</p>
                 <p className="text-gray-500 text-xs">{role}</p>
