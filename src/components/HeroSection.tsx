@@ -41,7 +41,7 @@ export function HeroSection() {
         </h1>
 
         {/* Subtítulo */}
-        <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed">
+        <p className="text-xl text-white/90 max-w-2xl mx-auto mb-10 leading-relaxed">
           Em menos de 2 minutos você recebe uma ideia personalizada com modelo de negócio,
           potencial de receita e como começar — mesmo sem saber programar.
         </p>
