@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 })
   }
 
-  // addSubscriber retorna false se já existia — fonte única de verdade
-  const isNew = addSubscriber(email)
+  // addSubscriber agora é async — Supabase ou fallback em memória
+  const isNew = await addSubscriber(email)
 
   // Tracking
   fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://scalemind-blog.vercel.app'}/api/track`, {
