@@ -17,7 +17,9 @@ const STATS = [
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden hero-animated-bg hero-grid">
+    <section className="relative overflow-hidden hero-animated-bg">
+      {/* Grid de pontos em camada separada — evita conflito de background */}
+      <div className="absolute inset-0 hero-grid pointer-events-none" />
       {/* Orbs de fundo — CSS puro, zero JS */}
       <div className="hero-orb hero-orb-1" />
       <div className="hero-orb hero-orb-2" />
