@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import type { ApiResponse, Ideia, UserProfile, SavedIdeia } from '@/types/generator'
+import type { ApiResponse, Ideia, UserProfile } from '@/types/generator'
 
 // ─── Configurações ────────────────────────────────────────────────────────────
 
@@ -46,30 +46,40 @@ const DIFICULDADE_STYLE: Record<string, string> = {
   'Alto':  'bg-red-100 text-red-700',
 }
 
-// ─── Persistência local ──────────────────────────────────────────────────────
+// ─── API de ideias ──────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'scalemind_saved_ideas'
-
-function loadSaved(): SavedIdeia[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') } catch { return [] }
+export interface DbIdea {
+  id:         string
+  profile:    UserProfile
+  idea:       Ideia
+  created_at: string
 }
 
-function persistIdeia(profile: UserProfile, ideia: Ideia, email: string): SavedIdeia {
-  const entry: SavedIdeia = {
-    id:      crypto.randomUUID(),
-    savedAt: new Date().toISOString(),
-    profile,
-    ideia,
-  }
-  const list = [entry, ...loadSaved()].slice(0, 20)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
-  localStorage.setItem('scalemind_user_email', email)
-  return entry
+async function apiSaveIdea(email: string, profile: UserProfile, idea: Ideia): Promise<string | null> {
+  try {
+    const res  = await fetch('/api/ideas', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-email': email },
+      body:    JSON.stringify({ profile, idea }),
+    })
+    const data = await res.json()
+    return data.id ?? null
+  } catch { return null }
 }
 
-function deleteIdeia(id: string) {
-  const list = loadSaved().filter(i => i.id !== id)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+async function apiFetchIdeas(email: string): Promise<DbIdea[]> {
+  try {
+    const res  = await fetch(`/api/ideas?email=${encodeURIComponent(email)}`)
+    const data = await res.json()
+    return data.ideas ?? []
+  } catch { return [] }
+}
+
+async function apiDeleteIdea(email: string, id: string): Promise<void> {
+  await fetch(`/api/ideas?id=${id}`, {
+    method:  'DELETE',
+    headers: { 'x-user-email': email },
+  }).catch(() => {})
 }
 
 // ─── Tracking real via API ───────────────────────────────────────────────────
@@ -94,7 +104,8 @@ export function GeradorClient() {
   const [error,    setError]    = useState<string | null>(null)
   const [usage,    setUsage]    = useState({ used: 0, limit: 3, remaining: 3 })
   const [isPremium, setIsPremium] = useState(false)
-  const [saved,    setSaved]    = useState<SavedIdeia[]>([])
+  const [saved,    setSaved]    = useState<DbIdea[]>([])
+  const [userEmail, setUserEmail] = useState<string>('')
   const resultRef = useRef<HTMLDivElement>(null)
 
   const [profile, setProfile] = useState<UserProfile>({
@@ -125,7 +136,11 @@ export function GeradorClient() {
       setIsPremium(true)
       setUsage({ used: 0, limit: 999, remaining: 999 })
     }
-    setSaved(loadSaved())
+    const email = localStorage.getItem('scalemind_user_email') ?? ''
+    if (email) {
+      setUserEmail(email)
+      apiFetchIdeas(email).then(setSaved)
+    }
   }, [])
 
   useEffect(() => {
@@ -213,9 +228,12 @@ export function GeradorClient() {
       {tab === 'salvas' ? (
         <SavedIdeasPanel
           saved={saved}
-          onDelete={(id) => { deleteIdeia(id); setSaved(loadSaved()) }}
+          onDelete={async (id) => {
+            if (userEmail) await apiDeleteIdea(userEmail, id)
+            setSaved(s => s.filter(i => i.id !== id))
+          }}
           onOpen={(entry) => {
-            setResponse({ success: true, fallback: false, source: 'ai', isPremium, data: entry.ideia, usage })
+            setResponse({ success: true, fallback: false, source: 'ai', isPremium, data: entry.idea, usage })
             setStep('result')
             setTab('gerador')
             setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
@@ -531,11 +549,14 @@ function IdeaCard({ ideia, source, fallback, profile, isPremium }: {
         </div>
       </div>
 
-      {/* Modal de salvar */}
       {showSaveModal && (
         <SaveModal
           ideia={ideia}
           profile={profile}
+          onSaved={(email, dbIdea) => {
+            setShowSaveModal(false)
+            track('salvou_ideia', { area: profile.area })
+          }}
           onClose={() => setShowSaveModal(false)}
         />
       )}
@@ -546,16 +567,16 @@ function IdeaCard({ ideia, source, fallback, profile, isPremium }: {
 // ─── Painel de ideias salvas ──────────────────────────────────────────────────
 
 function SavedIdeasPanel({ saved, onDelete, onOpen }: {
-  saved:    SavedIdeia[]
+  saved:    DbIdea[]
   onDelete: (id: string) => void
-  onOpen:   (entry: SavedIdeia) => void
+  onOpen:   (entry: DbIdea) => void
 }) {
   if (saved.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
         <div className="text-4xl mb-3">💡</div>
         <p className="text-gray-700 font-bold">Nenhuma ideia salva ainda</p>
-        <p className="text-gray-400 text-sm mt-1">Gere sua primeira ideia e ela aparecerá aqui automaticamente.</p>
+        <p className="text-gray-400 text-sm mt-1">Gere uma ideia e clique em “Salvar essa ideia”.</p>
       </div>
     )
   }
@@ -565,16 +586,16 @@ function SavedIdeasPanel({ saved, onDelete, onOpen }: {
       {saved.map((entry) => (
         <div key={entry.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-4 hover:border-sky-200 transition-colors">
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-gray-900 text-sm truncate">{entry.ideia.nome}</p>
-            <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.ideia.descricao}</p>
+            <p className="font-bold text-gray-900 text-sm truncate">{entry.idea.nome}</p>
+            <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.idea.descricao}</p>
             <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-emerald-600 font-semibold">{entry.ideia.receita}</span>
+              <span className="text-xs text-emerald-600 font-semibold">{entry.idea.receita}</span>
               <span className="text-gray-300">·</span>
               <span className="text-xs text-gray-400">{entry.profile.area}</span>
               <span className="text-gray-300">·</span>
               <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                DIFICULDADE_STYLE[entry.ideia.dificuldade] ?? 'bg-gray-100 text-gray-500'
-              }`}>{entry.ideia.dificuldade}</span>
+                DIFICULDADE_STYLE[entry.idea.dificuldade] ?? 'bg-gray-100 text-gray-500'
+              }`}>{entry.idea.dificuldade}</span>
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -595,9 +616,10 @@ function SavedIdeasPanel({ saved, onDelete, onOpen }: {
 
 // ─── Modal de salvar ideia ────────────────────────────────────────────────────
 
-function SaveModal({ ideia, profile, onClose }: {
+function SaveModal({ ideia, profile, onSaved, onClose }: {
   ideia:   Ideia
   profile: UserProfile
+  onSaved: (email: string, idea: DbIdea) => void
   onClose: () => void
 }) {
   const [email,   setEmail]   = useState(() => {
@@ -608,20 +630,24 @@ function SaveModal({ ideia, profile, onClose }: {
   const [error,   setError]   = useState('')
 
   async function handleSave() {
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const clean = email.trim().toLowerCase()
+    if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
       setError('Informe um e-mail válido.')
       return
     }
     setLoading(true)
     setError('')
     try {
+      // Registra na newsletter e salva a ideia no banco
       await fetch('/api/newsletter', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email }),
+        body:    JSON.stringify({ email: clean }),
       })
-      persistIdeia(profile, ideia, email.trim().toLowerCase())
-      track('salvou_ideia', { area: profile.area, email })
+      const id = await apiSaveIdea(clean, profile, ideia)
+      localStorage.setItem('scalemind_user_email', clean)
+      const dbIdea: DbIdea = { id: id ?? crypto.randomUUID(), profile, idea: ideia, created_at: new Date().toISOString() }
+      onSaved(clean, dbIdea)
       setDone(true)
     } catch {
       setError('Erro ao salvar. Tente novamente.')
