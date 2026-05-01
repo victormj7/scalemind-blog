@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { saveIdea, listIdeas, deleteIdea } from '@/lib/db'
+import { saveIdea, listIdeas, deleteIdea, scheduleSequence } from '@/lib/db'
 
 function getEmail(req: NextRequest): string | null {
   const email = req.headers.get('x-user-email')?.trim().toLowerCase()
@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
 
   const id = await saveIdea(email, body.profile as never, body.idea as never)
   if (!id) return NextResponse.json({ error: 'Erro ao salvar. Tente novamente.' }, { status: 500 })
+
+  // Agenda sequência de emails apenas na primeira ideia salva
+  scheduleSequence(email).catch(() => {})
 
   return NextResponse.json({ ok: true, id })
 }
