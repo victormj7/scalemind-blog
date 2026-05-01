@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { UserProfile, Ideia, ApiResponse } from '@/types/generator'
-import { ideaLimiter } from '@/lib/rateLimiter'
-import { isUserPremium } from '@/lib/premiumStore'
-
-const FREE_LIMIT = 3
-
-function getClientIP(req: NextRequest): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'anonymous'
-  )
-}
 
 // ─── Mensagens para a IA ──────────────────────────────────────────────────────
 
@@ -204,24 +192,9 @@ function gerarFallback(profile: UserProfile): Ideia {
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
+// ─── Handlers ────────────────────────────────────────────────────────────────────────────────
+
 export async function POST(req: NextRequest) {
-  const ip      = getClientIP(req)
-  const emailHeader = req.headers.get('x-user-email')?.toLowerCase().trim()
-  const premium = emailHeader ? isUserPremium(emailHeader) : false
-
-  // Verificar limite apenas para usuários free
-  if (!premium) {
-    const check = ideaLimiter.check(ip)
-    if (!check.allowed) {
-      return NextResponse.json({
-        success: false,
-        error:   'limit_reached',
-        limit:   FREE_LIMIT,
-        used:    FREE_LIMIT,
-      }, { status: 429 })
-    }
-  }
-
   let profile: UserProfile
   try {
     const body = await req.json()
@@ -235,15 +208,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Body inválido.' }, { status: 400 })
   }
 
-  // Incrementar contador apenas para free
-  let used = 0
-  if (!premium) {
-    const newUsage = ideaLimiter.increment(ip)
-    used = newUsage.count
-  }
-
-  // Tentar IA, fallback se falhar
-  const aiIdeia = await gerarComIA(profile)
+  const aiIdeia  = await gerarComIA(profile)
   const fallback = aiIdeia === null
   const ideia    = aiIdeia ?? gerarFallback(profile)
 
@@ -251,27 +216,14 @@ export async function POST(req: NextRequest) {
     success:   true,
     fallback,
     source:    fallback ? 'local' : 'ai',
-    isPremium: premium,
+    isPremium: false,
     data:      ideia,
-    usage: {
-      used:      premium ? 0 : used,
-      limit:     FREE_LIMIT,
-      remaining: premium ? 999 : Math.max(0, FREE_LIMIT - used),
-    },
+    usage:     { used: 0, limit: 999, remaining: 999 },
   }
 
   return NextResponse.json(response)
 }
 
-export async function GET(req: NextRequest) {
-  const ip    = getClientIP(req)
-  const entry = ideaLimiter.get(ip)
-  const used  = entry?.count ?? 0
-
-  return NextResponse.json({
-    used,
-    limit:     FREE_LIMIT,
-    remaining: Math.max(0, FREE_LIMIT - used),
-    hasAI:     !!process.env.OPENAI_API_KEY,
-  })
+export async function GET() {
+  return NextResponse.json({ used: 0, limit: 999, remaining: 999, hasAI: !!process.env.OPENAI_API_KEY })
 }

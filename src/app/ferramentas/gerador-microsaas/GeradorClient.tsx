@@ -102,7 +102,6 @@ export function GeradorClient() {
   const [loadMsg,  setLoadMsg]  = useState(0)
   const [response, setResponse] = useState<ApiResponse | null>(null)
   const [error,    setError]    = useState<string | null>(null)
-  const [usage,    setUsage]    = useState({ used: 0, limit: 3, remaining: 3 })
   const [isPremium, setIsPremium] = useState(false)
   const [saved,    setSaved]    = useState<DbIdea[]>([])
   const [userEmail, setUserEmail] = useState<string>('')
@@ -118,24 +117,10 @@ export function GeradorClient() {
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
     try {
-      const savedUsage = localStorage.getItem('scalemind_usage')
-      if (savedUsage) {
-        const parsed = JSON.parse(savedUsage)
-        if (parsed.date === today) {
-          const used = parsed.used ?? 0
-          setUsage({ used, limit: 3, remaining: Math.max(0, 3 - used) })
-        } else {
-          localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: 0 }))
-        }
-      } else {
-        localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: 0 }))
-      }
+      localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: 0 }))
     } catch {}
     const premium = localStorage.getItem('scalemind_premium') === 'true'
-    if (premium) {
-      setIsPremium(true)
-      setUsage({ used: 0, limit: 999, remaining: 999 })
-    }
+    if (premium) setIsPremium(true)
     const email = localStorage.getItem('scalemind_user_email') ?? ''
     if (email) {
       setUserEmail(email)
@@ -151,29 +136,18 @@ export function GeradorClient() {
 
   async function handleGenerate() {
     if (!profile.area.trim()) { setError('Informe sua área de interesse.'); return }
-    if (usage.remaining <= 0) return
 
     setLoading(true)
     setError(null)
     setLoadMsg(0)
 
     try {
-      const email = localStorage.getItem('scalemind_premium_email') ?? ''
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (email) headers['x-user-email'] = email
-
       const res  = await fetch('/api/generate-idea', {
         method:  'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(profile),
       })
       const data: ApiResponse = await res.json()
-
-      if (res.status === 429) {
-        track('atingiu_limite')
-        setUsage(u => ({ ...u, remaining: 0, used: u.limit }))
-        return
-      }
 
       if (!data.success) {
         setError('Erro ao gerar ideia. Tente novamente.')
@@ -181,14 +155,7 @@ export function GeradorClient() {
       }
 
       setResponse(data)
-      setUsage(data.usage)
       track('gerou_ideia', { area: profile.area, source: data.source })
-
-      try {
-        const today = new Date().toISOString().split('T')[0]
-        localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: data.usage.used }))
-      } catch {}
-
       setStep('result')
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
 
@@ -233,7 +200,7 @@ export function GeradorClient() {
             setSaved(s => s.filter(i => i.id !== id))
           }}
           onOpen={(entry) => {
-            setResponse({ success: true, fallback: false, source: 'ai', isPremium, data: entry.idea, usage })
+            setResponse({ success: true, fallback: false, source: 'ai', isPremium, data: entry.idea, usage: { used: 0, limit: 999, remaining: 999 } })
             setStep('result')
             setTab('gerador')
             setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
@@ -241,7 +208,7 @@ export function GeradorClient() {
         />
       ) : (
         <>
-          <UsageBar usage={usage} isPremium={isPremium} />
+          <UsageBar isPremium={isPremium} />
 
           {step === 'form' && (
             <Formulario
@@ -250,7 +217,6 @@ export function GeradorClient() {
               loading={loading}
               loadMsg={loadMsg}
               error={error}
-              usage={usage}
               onGenerate={handleGenerate}
             />
           )}
@@ -274,13 +240,12 @@ export function GeradorClient() {
 
 // ─── Formulário ───────────────────────────────────────────────────────────────
 
-function Formulario({ profile, setProfile, loading, loadMsg, error, usage, onGenerate }: {
+function Formulario({ profile, setProfile, loading, loadMsg, error, onGenerate }: {
   profile:    UserProfile
   setProfile: React.Dispatch<React.SetStateAction<UserProfile>>
   loading:    boolean
   loadMsg:    number
   error:      string | null
-  usage:      { remaining: number }
   onGenerate: () => void
 }) {
   return (
@@ -330,7 +295,7 @@ function Formulario({ profile, setProfile, loading, loadMsg, error, usage, onGen
               <span className="text-xs text-sky-200 font-normal animate-pulse">{LOADING_MSGS[loadMsg]}</span>
             </span>
           ) : (
-            `🚀 Gerar minha ideia (${usage.remaining} restante${usage.remaining !== 1 ? 's' : ''})`
+          `🚀 Gerar minha ideia`
           )}
         </button>
       </div>
@@ -362,7 +327,7 @@ function OpcaoGrupo({ label, opcoes, valor, onChange, corAtiva }: {
 
 // ─── Barra de uso ─────────────────────────────────────────────────────────────
 
-function UsageBar({ usage, isPremium }: { usage: { used: number; limit: number; remaining: number }; isPremium: boolean }) {
+function UsageBar({ isPremium }: { isPremium: boolean }) {
   if (isPremium) {
     return (
       <div className="bg-gradient-to-r from-emerald-50 to-sky-50 border-2 border-emerald-200 rounded-2xl p-4">
@@ -374,26 +339,13 @@ function UsageBar({ usage, isPremium }: { usage: { used: number; limit: number; 
       </div>
     )
   }
-
-  const pct = (usage.used / usage.limit) * 100
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-semibold text-gray-700">Ideias gratuitas hoje</span>
-        <span className={`text-sm font-bold tabular-nums ${usage.remaining === 0 ? 'text-red-600' : 'text-sky-600'}`}>
-          {usage.used}/{usage.limit}
-        </span>
+    <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <span className="text-lg">🆓</span>
+        <span className="text-sm font-semibold text-gray-700">Plano Grátis — 1 ideia completa</span>
       </div>
-      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-        <div className={`h-2 rounded-full transition-all duration-700 ${
-          usage.remaining === 0 ? 'bg-red-500' : usage.used >= 2 ? 'bg-amber-500' : 'bg-sky-500'
-        }`} style={{ width: `${pct}%` }} />
-      </div>
-      <p className="text-xs text-gray-400 mt-1.5">
-        {usage.remaining > 0
-          ? `${usage.remaining} ideia${usage.remaining !== 1 ? 's' : ''} restante${usage.remaining !== 1 ? 's' : ''} hoje`
-          : 'Limite atingido — volte amanhã ou faça upgrade'}
-      </p>
+      <a href="/upgrade" className="text-xs font-bold text-sky-600 hover:underline">Fazer upgrade →</a>
     </div>
   )
 }

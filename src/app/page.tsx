@@ -20,36 +20,52 @@ const PLANS = [
     color:   'border-gray-200',
     badge:   null,
     items: [
-      { ok: true,  text: '3 ideias por dia' },
-      { ok: true,  text: 'Nome e descrição da ideia' },
-      { ok: true,  text: 'Problema e público-alvo' },
-      { ok: false, text: 'Passo a passo de execução' },
-      { ok: false, text: 'Estratégia de monetização' },
-      { ok: false, text: 'Como validar em 7 dias' },
-      { ok: false, text: 'Como usar IA na ideia' },
+      { ok: true,  text: '1 ideia completa' },
+      { ok: true,  text: 'Salvar 1 ideia' },
+      { ok: true,  text: 'Checklist básico' },
+      { ok: false, text: '10 ideias/mês' },
+      { ok: false, text: 'Histórico completo' },
+      { ok: false, text: 'Validação avançada' },
     ],
     cta:      'Começar grátis',
     ctaHref:  '/ferramentas/gerador-microsaas',
     ctaStyle: 'bg-gray-100 hover:bg-gray-200 text-gray-800',
   },
   {
-    name:    'Premium',
+    name:    'Starter',
     price:   'R$ 9,90',
     period:  '/mês',
     color:   'border-sky-400 ring-2 ring-sky-400',
     badge:   'Mais popular',
     items: [
-      { ok: true, text: 'Ideias ilimitadas por dia' },
-      { ok: true, text: 'Nome e descrição da ideia' },
-      { ok: true, text: 'Problema e público-alvo' },
-      { ok: true, text: 'Passo a passo de execução' },
-      { ok: true, text: 'Estratégia de monetização' },
-      { ok: true, text: 'Como validar em 7 dias' },
-      { ok: true, text: 'Como usar IA na ideia' },
+      { ok: true, text: '10 ideias/mês' },
+      { ok: true, text: 'Histórico completo' },
+      { ok: true, text: 'Checklist completo' },
+      { ok: true, text: 'Copiloto de aprofundamento' },
+      { ok: false, text: 'Ideias ilimitadas' },
+      { ok: false, text: 'Validação avançada' },
     ],
-    cta:      '🚀 Assinar Premium',
+    cta:      '🚀 Assinar Starter',
     ctaHref:  '/upgrade',
     ctaStyle: 'bg-gradient-to-r from-sky-600 to-violet-600 hover:from-sky-500 hover:to-violet-500 text-white shadow-lg hover:shadow-sky-200',
+  },
+  {
+    name:    'Pro',
+    price:   'R$ 19,90',
+    period:  '/mês',
+    color:   'border-violet-400',
+    badge:   null,
+    items: [
+      { ok: true, text: 'Ideias ilimitadas' },
+      { ok: true, text: 'Histórico completo' },
+      { ok: true, text: 'Checklist completo' },
+      { ok: true, text: 'Validação avançada' },
+      { ok: true, text: 'Templates prontos' },
+      { ok: true, text: 'Copiloto de aprofundamento' },
+    ],
+    cta:      '💎 Assinar Pro',
+    ctaHref:  '/upgrade',
+    ctaStyle: 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg hover:shadow-violet-200',
   },
 ]
 
@@ -125,7 +141,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-extrabold text-gray-900 mt-2">Comece grátis, escale quando quiser</h2>
           <p className="text-gray-500 mt-3">Sem cartão de crédito para começar.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {PLANS.map((plan) => (
             <div key={plan.name} className={`bg-white rounded-2xl border-2 ${plan.color} p-8 relative`}>
               {plan.badge && (
