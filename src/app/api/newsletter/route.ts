@@ -7,7 +7,12 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+const ts = () => new Date().toISOString()
+const log = (obj: object) => console.log(JSON.stringify(obj))
+
 export async function POST(req: NextRequest) {
+  log({ type: 'NEWSLETTER_REQUEST_RECEIVED', timestamp: ts() })
+
   let email: string
   try {
     const body = await req.json()
@@ -16,12 +21,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Body inválido.' }, { status: 400 })
   }
 
+  log({ type: 'NEWSLETTER_EMAIL_RECEIVED', email, timestamp: ts() })
+
   if (!email || !isValidEmail(email)) {
+    log({ type: 'NEWSLETTER_VALIDATION_FAILED', reason: !email ? 'empty' : 'invalid_format', email, timestamp: ts() })
     return NextResponse.json({ error: 'E-mail inválido.' }, { status: 400 })
   }
 
-  // addSubscriber agora é async — Supabase ou fallback em memória
+  const storage = process.env.SUPABASE_URL ? 'supabase' : 'memory'
+  log({ type: 'NEWSLETTER_SAVING', email, storage, timestamp: ts() })
+
   const isNew = await addSubscriber(email)
+
+  if (!isNew) {
+    log({ type: 'NEWSLETTER_DUPLICATE', email, timestamp: ts() })
+  } else {
+    log({ type: 'NEWSLETTER_SAVED', email, storage, timestamp: ts() })
+  }
 
   // Tracking
   fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://scalemind-blog.vercel.app'}/api/track`, {
@@ -30,25 +46,21 @@ export async function POST(req: NextRequest) {
     body:    JSON.stringify({ event: 'waitlist_signup', data: { source: 'newsletter', email } }),
   }).catch(() => {})
 
-  console.log(JSON.stringify({
-    type:      'NEWSLETTER_SIGNUP',
-    email,
-    new:       isNew,
-    timestamp: new Date().toISOString(),
-  }))
-
   if (isNew) {
     const apiKey    = process.env.RESEND_API_KEY
     const fromEmail = process.env.FROM_EMAIL ?? 'ScaleMind <onboarding@resend.dev>'
 
-    if (apiKey) {
+    if (!apiKey) {
+      log({ type: 'NEWSLETTER_EMAIL_SKIPPED', reason: 'RESEND_API_KEY_NOT_SET', email, timestamp: ts() })
+    } else {
+      log({ type: 'NEWSLETTER_EMAIL_SENDING', email, timestamp: ts() })
       try {
         const resend = new Resend(apiKey)
         const { subject, html, text } = buildWelcomeEmail()
-        await resend.emails.send({ from: fromEmail, to: email, subject, html, text })
-        console.log(JSON.stringify({ type: 'EMAIL_SENT', email, timestamp: new Date().toISOString() }))
+        const { data } = await resend.emails.send({ from: fromEmail, to: email, subject, html, text })
+        log({ type: 'NEWSLETTER_EMAIL_SENT', email, resendId: data?.id, timestamp: ts() })
       } catch (err) {
-        console.error('[Resend Error]', err instanceof Error ? err.message : err)
+        log({ type: 'NEWSLETTER_EMAIL_ERROR', email, error: err instanceof Error ? err.message : String(err), timestamp: ts() })
       }
     }
   }

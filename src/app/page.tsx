@@ -72,13 +72,13 @@ export default function HomePage() {
       <section id="como-funciona" className="max-w-5xl mx-auto px-4 py-20">
         <div className="text-center mb-14">
           <span className="text-xs font-bold text-sky-600 uppercase tracking-widest">Simples assim</span>
-          <h2 className="text-3xl font-extrabold text-gray-900 mt-2">Como funciona em 3 passos</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 mt-2">Como o copiloto funciona em 3 passos</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { step: '1', icon: '🎯', title: 'Informe seu nicho', desc: 'Diga sua área de interesse — pode ser qualquer coisa, não precisa ser tecnologia.' },
-            { step: '2', icon: '🤖', title: 'IA gera sua ideia', desc: 'Nossa IA cria uma ideia personalizada com modelo de negócio e potencial de receita real.' },
-            { step: '3', icon: '💰', title: 'Execute e ganhe', desc: 'Use o passo a passo para transformar a ideia em renda. Sem precisar saber programar.' },
+            { step: '1', icon: '🎯', title: 'Informe seu perfil', desc: 'Diga sua área, nível e objetivo. O copiloto usa isso para personalizar tudo.' },
+            { step: '2', icon: '🤖', title: 'Copiloto gera o plano', desc: 'IA cria a ideia com modelo de negócio, receita estimada e passo a passo de execução.' },
+            { step: '3', icon: '💰', title: 'Aprofunde e execute', desc: 'Pergunte ao copiloto sobre precificação, primeiro cliente, stack técnica e mais.' },
           ].map(({ step, icon, title, desc }) => (
             <div key={step} className="text-center group">
               <div className="w-16 h-16 bg-gradient-to-br from-sky-500 to-violet-600 text-white rounded-2xl flex items-center justify-center text-2xl mx-auto mb-5 shadow-lg group-hover:scale-110 transition-transform duration-200">
@@ -93,7 +93,7 @@ export default function HomePage() {
         <div className="text-center mt-12">
           <Link href="/ferramentas/gerador-microsaas"
             className="inline-flex items-center gap-2 px-8 py-4 bg-sky-600 hover:bg-sky-700 text-white font-extrabold rounded-2xl transition-all hover:shadow-xl hover:shadow-sky-200 hover:-translate-y-0.5 text-base">
-            🚀 Quero minha ideia pronta agora
+            🤖 Iniciar com meu copiloto agora
           </Link>
         </div>
       </section>

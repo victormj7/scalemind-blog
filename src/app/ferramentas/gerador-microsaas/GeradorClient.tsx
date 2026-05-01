@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import type { ApiResponse, Ideia, UserProfile } from '@/types/generator'
+import type { ApiResponse, Ideia, UserProfile, SavedIdeia } from '@/types/generator'
 
 // ─── Configurações ────────────────────────────────────────────────────────────
 
@@ -31,10 +31,44 @@ const LOADING_MSGS = [
   'Finalizando sua ideia...',
 ]
 
+const DEEPEN_TOPICS = [
+  { value: 'primeiro-cliente',  label: '🎯 Conseguir o 1º cliente',  desc: 'Onde e como abordar' },
+  { value: 'precificacao',      label: '💰 Precificação',           desc: 'Quanto cobrar e por quê' },
+  { value: 'stack-tecnica',     label: '🛠️ Stack técnica',          desc: 'Ferramentas e arquitetura' },
+  { value: 'marketing',        label: '📣 Marketing inicial',      desc: 'Canais e mensagem' },
+  { value: 'automacao',        label: '🤖 Automatizar com IA',     desc: 'Fluxos e ferramentas' },
+  { value: 'riscos',           label: '⚠️ Riscos e obstáculos',    desc: 'O que pode dar errado' },
+]
+
 const DIFICULDADE_STYLE: Record<string, string> = {
   'Baixo': 'bg-emerald-100 text-emerald-700',
   'Médio': 'bg-amber-100 text-amber-700',
   'Alto':  'bg-red-100 text-red-700',
+}
+
+// ─── Persistência local ──────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'scalemind_saved_ideas'
+
+function loadSaved(): SavedIdeia[] {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') } catch { return [] }
+}
+
+function saveIdeia(profile: UserProfile, ideia: Ideia): SavedIdeia {
+  const entry: SavedIdeia = {
+    id:      crypto.randomUUID(),
+    savedAt: new Date().toISOString(),
+    profile,
+    ideia,
+  }
+  const list = [entry, ...loadSaved()].slice(0, 20) // máx 20 salvas
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+  return entry
+}
+
+function deleteIdeia(id: string) {
+  const list = loadSaved().filter(i => i.id !== id)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
 }
 
 // ─── Tracking real via API ───────────────────────────────────────────────────
@@ -72,12 +106,14 @@ async function submitWaitlist(email: string, source: string) {
 
 export function GeradorClient() {
   const [step,     setStep]     = useState<'form' | 'result'>('form')
+  const [tab,      setTab]      = useState<'gerador' | 'salvas'>('gerador')
   const [loading,  setLoading]  = useState(false)
   const [loadMsg,  setLoadMsg]  = useState(0)
   const [response, setResponse] = useState<ApiResponse | null>(null)
   const [error,    setError]    = useState<string | null>(null)
   const [usage,    setUsage]    = useState({ used: 0, limit: 3, remaining: 3 })
   const [isPremium, setIsPremium] = useState(false)
+  const [saved,    setSaved]    = useState<SavedIdeia[]>([])
   const resultRef = useRef<HTMLDivElement>(null)
 
   const [profile, setProfile] = useState<UserProfile>({
@@ -90,23 +126,25 @@ export function GeradorClient() {
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
     try {
-      const saved = localStorage.getItem('scalemind_usage')
-      if (saved) {
-        const parsed = JSON.parse(saved)
+      const savedUsage = localStorage.getItem('scalemind_usage')
+      if (savedUsage) {
+        const parsed = JSON.parse(savedUsage)
         if (parsed.date === today) {
           const used = parsed.used ?? 0
           setUsage({ used, limit: 3, remaining: Math.max(0, 3 - used) })
-          return
+        } else {
+          localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: 0 }))
         }
+      } else {
+        localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: 0 }))
       }
-      localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: 0 }))
     } catch {}
-    // Verificar se é premium via localStorage
     const premium = localStorage.getItem('scalemind_premium') === 'true'
     if (premium) {
       setIsPremium(true)
       setUsage({ used: 0, limit: 999, remaining: 999 })
     }
+    setSaved(loadSaved())
   }, [])
 
   useEffect(() => {
@@ -155,6 +193,10 @@ export function GeradorClient() {
         localStorage.setItem('scalemind_usage', JSON.stringify({ date: today, used: data.usage.used }))
       } catch {}
 
+      // Salvar ideia automaticamente
+      saveIdeia(profile, data.data)
+      setSaved(loadSaved())
+
       setStep('result')
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
 
@@ -172,30 +214,69 @@ export function GeradorClient() {
 
   return (
     <div className="space-y-6">
-      <UsageBar usage={usage} isPremium={isPremium} />
 
-      {step === 'form' && (
-        <Formulario
-          profile={profile}
-          setProfile={setProfile}
-          loading={loading}
-          loadMsg={loadMsg}
-          error={error}
-          usage={usage}
-          onGenerate={handleGenerate}
+      {/* Abas: Copiloto / Minhas Ideias */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+        <button
+          onClick={() => setTab('gerador')}
+          className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+            tab === 'gerador' ? 'bg-white text-sky-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}>
+          🤖 Copiloto
+        </button>
+        <button
+          onClick={() => setTab('salvas')}
+          className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
+            tab === 'salvas' ? 'bg-white text-sky-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}>
+          💾 Minhas Ideias
+          {saved.length > 0 && (
+            <span className="ml-1.5 bg-sky-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+              {saved.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {tab === 'salvas' ? (
+        <SavedIdeasPanel
+          saved={saved}
+          onDelete={(id) => { deleteIdeia(id); setSaved(loadSaved()) }}
+          onOpen={(entry) => {
+            setResponse({ success: true, fallback: false, source: 'ai', isPremium, data: entry.ideia, usage })
+            setStep('result')
+            setTab('gerador')
+            setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+          }}
         />
-      )}
+      ) : (
+        <>
+          <UsageBar usage={usage} isPremium={isPremium} />
 
-      {step === 'result' && response && (
-        <div ref={resultRef} className="space-y-4">
-          <button
-            onClick={() => { setStep('form'); setResponse(null) }}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-sky-600 transition-colors"
-          >
-            ← Gerar nova ideia
-          </button>
-          <IdeaCard ideia={response.data} source={response.source} fallback={response.fallback} />
-        </div>
+          {step === 'form' && (
+            <Formulario
+              profile={profile}
+              setProfile={setProfile}
+              loading={loading}
+              loadMsg={loadMsg}
+              error={error}
+              usage={usage}
+              onGenerate={handleGenerate}
+            />
+          )}
+
+          {step === 'result' && response && (
+            <div ref={resultRef} className="space-y-4">
+              <button
+                onClick={() => { setStep('form'); setResponse(null) }}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-sky-600 transition-colors"
+              >
+                ← Gerar nova ideia
+              </button>
+              <IdeaCard ideia={response.data} source={response.source} fallback={response.fallback} profile={profile} isPremium={isPremium} />
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -215,8 +296,8 @@ function Formulario({ profile, setProfile, loading, loadMsg, error, usage, onGen
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="bg-gradient-to-r from-sky-600 to-violet-600 px-6 py-4">
-        <h2 className="text-white font-bold text-lg">Personalize sua ideia</h2>
-        <p className="text-sky-100 text-sm">Quanto mais detalhes, mais precisa será a ideia</p>
+        <h2 className="text-white font-bold text-lg">🤖 Configure seu copiloto</h2>
+        <p className="text-sky-100 text-sm">Quanto mais detalhes, mais preciso será o plano de execução</p>
       </div>
 
       <div className="p-6 space-y-7">
@@ -329,8 +410,14 @@ function UsageBar({ usage, isPremium }: { usage: { used: number; limit: number; 
 
 // ─── Card da ideia ────────────────────────────────────────────────────────────
 
-function IdeaCard({ ideia, source, fallback }: { ideia: Ideia; source: string; fallback: boolean }) {
-  const [copied, setCopied] = useState(false)
+function IdeaCard({ ideia, source, fallback, profile, isPremium }: {
+  ideia: Ideia; source: string; fallback: boolean
+  profile: UserProfile; isPremium: boolean
+}) {
+  const [copied,        setCopied]        = useState(false)
+  const [deepenTopic,   setDeepenTopic]   = useState<string | null>(null)
+  const [deepenResult,  setDeepenResult]  = useState<string | null>(null)
+  const [deepenLoading, setDeepenLoading] = useState(false)
 
   function copiar() {
     const text = [`💡 ${ideia.nome}`, ``, `📝 ${ideia.descricao}`,
@@ -339,10 +426,31 @@ function IdeaCard({ ideia, source, fallback }: { ideia: Ideia; source: string; f
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
   }
 
+  async function handleDeepen(topic: string) {
+    if (deepenTopic === topic && deepenResult) { setDeepenTopic(null); setDeepenResult(null); return }
+    setDeepenTopic(topic)
+    setDeepenResult(null)
+    setDeepenLoading(true)
+    track('aprofundou_ideia', { topic, area: profile.area })
+    try {
+      const res  = await fetch('/api/generate-idea/deepen', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ ideia, topic, profile }),
+      })
+      const data = await res.json()
+      setDeepenResult(data.result ?? 'Não foi possível aprofundar. Tente novamente.')
+    } catch {
+      setDeepenResult('Erro de conexão. Tente novamente.')
+    } finally {
+      setDeepenLoading(false)
+    }
+  }
+
   return (
     <div className="bg-white rounded-2xl border-2 border-sky-200 shadow-xl overflow-hidden">
 
-      {/* Header com receita em destaque máximo */}
+      {/* Header */}
       <div className="bg-gradient-to-br from-sky-600 to-violet-700 p-6 text-white">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
@@ -358,8 +466,6 @@ function IdeaCard({ ideia, source, fallback }: { ideia: Ideia; source: string; f
           </span>
         </div>
         <p className="text-sky-100 text-sm leading-relaxed mb-4">{ideia.descricao}</p>
-
-        {/* Receita em destaque — elemento mais visível */}
         <div className="bg-white/15 border border-white/25 rounded-xl p-4">
           <p className="text-sky-200 text-xs font-bold uppercase tracking-wider mb-1">💰 Potencial de receita</p>
           <p className="text-white text-2xl font-extrabold">{ideia.receita}</p>
@@ -383,21 +489,46 @@ function IdeaCard({ ideia, source, fallback }: { ideia: Ideia; source: string; f
         ))}
       </div>
 
-      {/* Prova de valor — primeiro passo visível antes do blur */}
+      {/* Primeiro passo visível */}
       <div className="bg-emerald-50 border-t border-emerald-100 p-5">
-        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">
-          ✅ Exemplo de como começar:
-        </p>
-        <p className="text-gray-800 text-sm leading-relaxed font-medium">
-          {ideia.passos[0]}
-        </p>
-        <p className="text-xs text-emerald-600 mt-2 font-semibold">
-          + 3 passos completos desbloqueados no Premium
-        </p>
+        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">✅ Exemplo de como começar:</p>
+        <p className="text-gray-800 text-sm leading-relaxed font-medium">{ideia.passos[0]}</p>
+        <p className="text-xs text-emerald-600 mt-2 font-semibold">+ 3 passos completos desbloqueados no Premium</p>
       </div>
 
       {/* Blur premium */}
       <PremiumBlur ideia={ideia} />
+
+      {/* Copiloto: Aprofundar */}
+      <div className="border-t border-gray-100 p-5">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">🤖 Copiloto — aprofundar esta ideia</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {DEEPEN_TOPICS.map(({ value, label, desc }) => (
+            <button key={value} onClick={() => handleDeepen(value)}
+              className={`p-3 rounded-xl border-2 text-left transition-all text-xs ${
+                deepenTopic === value
+                  ? 'border-sky-500 bg-sky-50'
+                  : 'border-gray-100 hover:border-sky-200 bg-gray-50'
+              }`}>
+              <div className="font-bold text-gray-800">{label}</div>
+              <div className="text-gray-400 mt-0.5">{desc}</div>
+            </button>
+          ))}
+        </div>
+
+        {deepenTopic && (
+          <div className="mt-4 bg-sky-50 border border-sky-200 rounded-xl p-4">
+            {deepenLoading ? (
+              <div className="flex items-center gap-2 text-sky-600 text-sm">
+                <span className="w-4 h-4 border-2 border-sky-300 border-t-sky-600 rounded-full animate-spin" />
+                Copiloto analisando...
+              </div>
+            ) : (
+              <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">{deepenResult}</p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Ações */}
       <div className="p-4 flex gap-3 border-t border-gray-100">
@@ -412,6 +543,56 @@ function IdeaCard({ ideia, source, fallback }: { ideia: Ideia; source: string; f
           📚 Aprender mais →
         </a>
       </div>
+    </div>
+  )
+}
+
+// ─── Painel de ideias salvas ──────────────────────────────────────────────────
+
+function SavedIdeasPanel({ saved, onDelete, onOpen }: {
+  saved:    SavedIdeia[]
+  onDelete: (id: string) => void
+  onOpen:   (entry: SavedIdeia) => void
+}) {
+  if (saved.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
+        <div className="text-4xl mb-3">💡</div>
+        <p className="text-gray-700 font-bold">Nenhuma ideia salva ainda</p>
+        <p className="text-gray-400 text-sm mt-1">Gere sua primeira ideia e ela aparecerá aqui automaticamente.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {saved.map((entry) => (
+        <div key={entry.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-4 hover:border-sky-200 transition-colors">
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-gray-900 text-sm truncate">{entry.ideia.nome}</p>
+            <p className="text-xs text-gray-400 mt-0.5 truncate">{entry.ideia.descricao}</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-xs text-emerald-600 font-semibold">{entry.ideia.receita}</span>
+              <span className="text-gray-300">·</span>
+              <span className="text-xs text-gray-400">{entry.profile.area}</span>
+              <span className="text-gray-300">·</span>
+              <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                DIFICULDADE_STYLE[entry.ideia.dificuldade] ?? 'bg-gray-100 text-gray-500'
+              }`}>{entry.ideia.dificuldade}</span>
+            </div>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button onClick={() => onOpen(entry)}
+              className="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-lg transition-colors">
+              Abrir
+            </button>
+            <button onClick={() => onDelete(entry.id)}
+              className="px-3 py-2 bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-500 text-xs font-bold rounded-lg transition-colors">
+              ✕
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

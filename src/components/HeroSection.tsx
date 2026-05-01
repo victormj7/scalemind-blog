@@ -15,6 +15,13 @@ const STATS = [
   { value: '2min',  label: 'Para ter sua ideia' },
 ]
 
+const COPILOT_STEPS = [
+  { icon: '💡', label: 'Gera a ideia',       desc: 'Personalizada pro seu perfil' },
+  { icon: '🗺️', label: 'Mostra o caminho',   desc: 'Passo a passo de execução' },
+  { icon: '🧪', label: 'Ensina a validar',   desc: 'Sem gastar dinheiro' },
+  { icon: '🤖', label: 'Usa IA com você',    desc: 'Automação desde o início' },
+]
+
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden hero-animated-bg">
@@ -30,23 +37,34 @@ export function HeroSection() {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 bg-white/10 text-emerald-300 text-xs font-bold px-4 py-2 rounded-full mb-8 border border-white/20 backdrop-blur-sm">
           <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-          Plataforma para criar negócios com IA · 100% gratuito para começar
+          Copiloto de negócios com IA · 100% gratuito para começar
         </div>
 
         {/* Headline principal */}
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6 tracking-tight">
-          Use IA para encontrar uma{' '}
+          Seu{' '}
           <span className="bg-gradient-to-r from-sky-400 to-violet-400 bg-clip-text text-transparent" style={{ filter: 'drop-shadow(0 0 20px rgba(14,165,233,0.4))' }}>
-            ideia de negócio
+            copiloto com IA
           </span>
-          {' '}pronta pra ganhar dinheiro
+          {' '}para criar e executar negócios
         </h1>
 
         {/* Subtítulo */}
-        <p className="text-xl text-white/90 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Em menos de 2 minutos você recebe uma ideia personalizada com modelo de negócio,
-          potencial de receita e como começar — mesmo sem saber programar.
+        <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8 leading-relaxed">
+          Não só gera a ideia — mostra o caminho completo para executar, validar e ganhar dinheiro.
+          Mesmo sem saber programar.
         </p>
+
+        {/* O que o copiloto faz */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto mb-10">
+          {COPILOT_STEPS.map(({ icon, label, desc }) => (
+            <div key={label} className="bg-white/8 backdrop-blur-sm rounded-xl border border-white/15 p-3 text-center">
+              <div className="text-2xl mb-1">{icon}</div>
+              <div className="text-white text-xs font-bold">{label}</div>
+              <div className="text-gray-400 text-xs mt-0.5">{desc}</div>
+            </div>
+          ))}
+        </div>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -54,7 +72,7 @@ export function HeroSection() {
             href="/ferramentas/gerador-microsaas"
             className="btn-glow inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-sky-500 to-violet-600 hover:from-sky-400 hover:to-violet-500 text-white font-extrabold rounded-2xl transition-all hover:shadow-2xl hover:shadow-sky-500/30 hover:-translate-y-1 text-lg"
           >
-            🚀 Gerar minha ideia de negócio agora
+            🚀 Iniciar com meu copiloto agora
           </Link>
           <Link
             href="#como-funciona"

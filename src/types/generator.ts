@@ -23,6 +23,14 @@ export interface Ideia {
   dificuldade: 'Baixo' | 'Médio' | 'Alto'
 }
 
+// Ideia salva localmente
+export interface SavedIdeia {
+  id:        string
+  savedAt:   string
+  profile:   UserProfile
+  ideia:     Ideia
+}
+
 // Resposta padronizada da API
 export interface ApiResponse {
   success:   boolean

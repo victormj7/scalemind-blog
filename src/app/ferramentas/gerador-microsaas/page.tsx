@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { GeradorClient } from './GeradorClient'
 
 export const metadata: Metadata = {
-  title: 'Gerador de Ideias de Negócios com IA — Grátis',
-  description: 'Gere ideias de MicroSaaS, automações e negócios digitais que você pode transformar em renda. Ferramenta gratuita com potencial de receita real.',
+  title: 'Copiloto de Negócios com IA — Crie e Execute seu MicroSaaS',
+  description: 'Não só gera a ideia — mostra o caminho completo para executar, validar e ganhar dinheiro. Copiloto com IA para criar negócios digitais, mesmo sem saber programar.',
 }
 
 export default function GeradorPage() {
@@ -17,12 +17,12 @@ export default function GeradorPage() {
             ✅ Gratuito · Sem cadastro · Resultado em segundos
           </span>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
-            Gerador de ideias de negócios
-            <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent"> com IA</span>
+            Seu copiloto com IA para
+            <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent"> criar e executar negócios</span>
           </h1>
           <p className="text-gray-300 text-lg max-w-xl mx-auto">
-            Gere ideias de MicroSaaS, automações e negócios digitais que você pode transformar em renda —
-            mesmo sem saber programar.
+            Não só gera a ideia — mostra o caminho completo para executar, validar e ganhar dinheiro.
+            Mesmo sem saber programar.
           </p>
           <div className="flex items-center justify-center gap-6 mt-6 text-sm">
             <span className="text-emerald-300 font-semibold">🔥 847 ideias geradas</span>
@@ -66,11 +66,11 @@ export default function GeradorPage() {
 
       {/* CTA final */}
       <div className="bg-gradient-to-r from-sky-600 to-violet-600 py-12 px-4 text-center text-white">
-        <h2 className="text-2xl font-extrabold mb-3">Pronto para descobrir sua ideia?</h2>
-        <p className="text-sky-100 mb-6">Mais de 847 empreendedores já geraram ideias aqui. Agora é a sua vez.</p>
+        <h2 className="text-2xl font-extrabold mb-3">Pronto para executar sua ideia?</h2>
+        <p className="text-sky-100 mb-6">Mais de 847 empreendedores já usaram o copiloto. Agora é a sua vez.</p>
         <a href="/ferramentas/gerador-microsaas"
           className="inline-block px-8 py-4 bg-white text-sky-700 font-bold rounded-xl hover:bg-sky-50 transition-colors shadow-lg">
-          🚀 Gerar minha ideia agora
+          🤖 Iniciar com meu copiloto agora
         </a>
       </div>
     </div>
