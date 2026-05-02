@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getAllSlugs, getPostBySlug, getRecentPosts } from '@/lib/posts'
+import { getAllSlugs, getPostBySlug, getRecentPosts, getPostCta, type Category } from '@/lib/posts'
+import type { Post } from '@/types/post'
 import { formatDate } from '@/lib/utils'
 import { CategoryBadge } from '@/components/ui/CategoryBadge'
 import { AdBanner } from '@/components/ui/AdBanner'
@@ -119,9 +120,8 @@ export default async function PostPage({ params }: PostPageProps) {
 
           {/* CTA meio do artigo */}
           <CtaBox
-            title="Quer uma ideia pronta pra você?"
-            subtitle="Use nosso gerador gratuito e receba uma ideia de negócio personalizada com potencial de receita real — em segundos."
-            buttonText="🚀 Gerar minha ideia grátis"
+            cta={getPostCta(p.category)}
+            href="/ferramentas/gerador-microsaas"
           />
 
           {/* AdSense */}
@@ -130,10 +130,10 @@ export default async function PostPage({ params }: PostPageProps) {
           {/* CTA final — dark */}
           <CtaBox
             variant="dark"
-            title="Descubra sua ideia de negócio agora"
-            subtitle="Mais de 847 empreendedores já geraram ideias aqui. Personalize para o seu nicho e veja o potencial de receita."
-            buttonText="💰 Quero ver como ganhar dinheiro com isso"
+            cta={getPostCta(p.category)}
+            href="/ferramentas/gerador-microsaas"
           />
+
 
           {/* Compartilhamento */}
           <div className="mt-10 pt-6 border-t border-gray-200">
@@ -155,7 +155,7 @@ export default async function PostPage({ params }: PostPageProps) {
               className="block w-full py-3 bg-white text-sky-700 font-bold rounded-xl text-sm hover:bg-sky-50 transition-all hover:shadow-md">
               Gerar ideia grátis →
             </Link>
-            <p className="text-xs text-sky-200 mt-3">🔥 847 ideias já geradas</p>
+            <p className="text-xs text-sky-200 mt-3">🔥 Ideias personalizadas grátis</p>
           </div>
 
           <AdBanner slot="sidebar" />

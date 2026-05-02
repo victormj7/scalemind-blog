@@ -33,6 +33,43 @@ const nextConfig = {
       { protocol: 'https', hostname: 'source.unsplash.com' },
     ],
   },
+  async redirects() {
+    return [
+      // IA money duplicates to principal guia
+      {
+        source: '/blog/como-ganhar-dinheiro-com-ia-2026-guia-completo',
+        destination: '/blog/guia-definitivo-ganhar-dinheiro-ia-2026',
+        permanent: true,
+      },
+      {
+        source: '/blog/como-ganhar-dinheiro-com-ia-2026',
+        destination: '/blog/guia-definitivo-ganhar-dinheiro-ia-2026',
+        permanent: true,
+      },
+      // Dollar variants
+      {
+        source: '/blog/como-ganhar-dinheiro-em-dolar-online-brasil',
+        destination: '/blog/como-ganhar-em-dolar-pela-internet',
+        permanent: true,
+      },
+      // Test files (even if deleted, safe)
+      {
+        source: '/blog/teste-da-api',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/blog/teste-de-automacao',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/blog/testei-gerador-ideias-microsaas',
+        destination: '/',
+        permanent: false,
+      },
+    ]
+  },
   async headers() {
     return [
       {

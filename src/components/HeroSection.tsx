@@ -9,11 +9,10 @@ const TESTIMONIALS = [
 ]
 
 const STATS = [
-  { value: '847+',  label: 'Ideias geradas' },
-  { value: '312',   label: 'Usuários ativos' },
   { value: 'R$0',   label: 'Para começar' },
   { value: '2min',  label: 'Para ter sua ideia' },
 ]
+
 
 const COPILOT_STEPS = [
   { icon: '💡', label: 'Gera a ideia',       desc: 'Personalizada pro seu perfil' },

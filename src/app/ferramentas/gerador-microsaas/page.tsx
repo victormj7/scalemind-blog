@@ -24,10 +24,8 @@ export default function GeradorPage() {
             Não só gera a ideia — mostra o caminho completo para executar, validar e ganhar dinheiro.
             Mesmo sem saber programar.
           </p>
-          <div className="flex items-center justify-center gap-6 mt-6 text-sm">
-            <span className="text-emerald-300 font-semibold">🔥 847 ideias geradas</span>
-            <span className="text-gray-500">·</span>
-            <span className="text-sky-300 font-semibold">👥 312 usuários ativos</span>
+        <div className="flex items-center justify-center gap-6 mt-6 text-sm">
+            <span className="text-emerald-300 font-semibold">🔥 Ideias geradas em tempo real</span>
           </div>
         </div>
       </div>
@@ -67,7 +65,7 @@ export default function GeradorPage() {
       {/* CTA final */}
       <div className="bg-gradient-to-r from-sky-600 to-violet-600 py-12 px-4 text-center text-white">
         <h2 className="text-2xl font-extrabold mb-3">Pronto para executar sua ideia?</h2>
-        <p className="text-sky-100 mb-6">Mais de 847 empreendedores já usaram o copiloto. Agora é a sua vez.</p>
+        <p className="text-sky-100 mb-6">Agora é a sua vez de gerar ideias personalizadas.</p>
         <a href="/ferramentas/gerador-microsaas"
           className="inline-block px-8 py-4 bg-white text-sky-700 font-bold rounded-xl hover:bg-sky-50 transition-colors shadow-lg">
           🤖 Iniciar com meu copiloto agora

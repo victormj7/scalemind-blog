@@ -106,3 +106,34 @@ export function getFeaturedPosts(): PostMeta[] {
 export function getRecentPosts(limit = 6): PostMeta[] {
   return getAllPosts().slice(0, limit)
 }
+
+/** Retorna CTA contextual baseado na categoria do post */
+export function getPostCta(category: Category) {
+  switch (category) {
+    case 'Renda Online':
+      return {
+        title: '💰 Descubra uma ideia para ganhar dinheiro',
+        subtitle: 'Gere uma ideia personalizada para o seu perfil e comece a ganhar renda extra ainda hoje.',
+      }
+    case 'MicroSaaS':
+      return {
+        title: '🚀 Crie seu MicroSaaS do zero',
+        subtitle: 'Use o gerador para criar e validar sua ideia de negócio digital em minutos.',
+      }
+    case 'Automação':
+      return {
+        title: '🤖 Automatize com IA grátis',
+        subtitle: 'Descubra como usar IA para automatizar e gerar renda passiva.',
+      }
+    case 'Finanças':
+      return {
+        title: '📈 Gere ideias para finanças digitais',
+        subtitle: 'Transforme seu conhecimento em produto digital com IA.',
+      }
+    default:
+      return {
+        title: 'Gere sua ideia personalizada agora',
+        subtitle: 'Use nosso gerador gratuito para descobrir uma oportunidade sob medida para você.',
+      }
+  }
+}
