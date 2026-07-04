@@ -28,7 +28,7 @@ const LOADING_MSGS = [
   'Identificando oportunidades de mercado...',
   'Calculando potencial de receita...',
   'Personalizando para você...',
-  'Finalizando sua ideia...',
+  'Finalizando seu plano de execução...',
 ]
 
 const DEEPEN_TOPICS = [
@@ -38,6 +38,30 @@ const DEEPEN_TOPICS = [
   { value: 'marketing',        label: '📣 Marketing inicial',      desc: 'Canais e mensagem' },
   { value: 'automacao',        label: '🤖 Automatizar com IA',     desc: 'Fluxos e ferramentas' },
   { value: 'riscos',           label: '⚠️ Riscos e obstáculos',    desc: 'O que pode dar errado' },
+]
+
+// Sugestões de áreas para autocomplete
+const AREA_SUGGESTIONS = [
+  { value: 'IA', emoji: '🤖', category: 'Tecnologia' },
+  { value: 'Automação', emoji: '⚡', category: 'Tecnologia' },
+  { value: 'Marketing', emoji: '📣', category: 'Negócios' },
+  { value: 'Design', emoji: '🎨', category: 'Criatividade' },
+  { value: 'Fitness', emoji: '💪', category: 'Saúde' },
+  { value: 'Nutrição', emoji: '🥗', category: 'Saúde' },
+  { value: 'Finanças', emoji: '💰', category: 'Negócios' },
+  { value: 'Programação', emoji: '💻', category: 'Tecnologia' },
+  { value: 'E-commerce', emoji: '🛒', category: 'Negócios' },
+  { value: 'Atendimento', emoji: '🎧', category: 'Negócios' },
+  { value: 'Social Media', emoji: '📱', category: 'Marketing' },
+  { value: 'Educação', emoji: '📚', category: 'Ensino' },
+  { value: 'Produtividade', emoji: '⚙️', category: 'Negócios' },
+  { value: 'Vendas', emoji: '📈', category: 'Negócios' },
+  { value: 'Direito', emoji: '⚖️', category: 'Serviços' },
+  { value: 'Contabilidade', emoji: '📊', category: 'Serviços' },
+  { value: 'RH', emoji: '👥', category: 'Negócios' },
+  { value: 'Imobiliário', emoji: '🏠', category: 'Serviços' },
+  { value: 'Turismo', emoji: '✈️', category: 'Serviços' },
+  { value: 'Beleza', emoji: '💄', category: 'Saúde' },
 ]
 
 const DIFICULDADE_STYLE: Record<string, string> = {
@@ -93,6 +117,95 @@ function track(event: string, data?: Record<string, unknown>) {
   }).catch(() => {}) // silencia erros de rede
 }
 
+// ─── Componente de autocomplete ───────────────────────────────────────────────
+
+function AreaInput({ value, onChange, error }: {
+  value: string
+  onChange: (value: string) => void
+  error: string | null
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [highlighted, setHighlighted] = useState(-1)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const filtered = value.length > 0
+    ? AREA_SUGGESTIONS.filter(s => s.value.toLowerCase().includes(value.toLowerCase()))
+    : AREA_SUGGESTIONS
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div ref={containerRef} className="relative">
+      <label className="block text-sm font-bold text-gray-700 mb-2">
+        1. Qual é sua área de interesse ou experiência?
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={e => { onChange(e.target.value); setIsOpen(true); setHighlighted(-1) }}
+          onFocus={() => setIsOpen(true)}
+          placeholder="Ex: nutrição, marketing, fitness, educação..."
+          className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none text-gray-800 text-sm transition-colors ${
+            error ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-sky-500'
+          }`}
+          aria-autocomplete="list"
+          aria-expanded={isOpen}
+        />
+        {value && (
+          <button
+            onClick={() => { onChange(''); setIsOpen(true) }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {isOpen && filtered.length > 0 && (
+        <div className="absolute z-20 w-full mt-2 bg-white rounded-xl border-2 border-gray-100 shadow-xl max-h-64 overflow-y-auto">
+          <div className="p-2">
+            <p className="text-xs text-gray-400 px-3 py-1 font-semibold uppercase tracking-wider">
+              Sugestões populares
+            </p>
+            {filtered.map((suggestion, idx) => (
+              <button
+                key={suggestion.value}
+                onClick={() => {
+                  onChange(suggestion.value)
+                  setIsOpen(false)
+                  setHighlighted(-1)
+                }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors ${
+                  idx === highlighted ? 'bg-sky-50 text-sky-700' : 'hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-xl">{suggestion.emoji}</span>
+                <div>
+                  <span className="font-semibold text-sm">{suggestion.value}</span>
+                  <span className="text-xs text-gray-400 ml-2">{suggestion.category}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="text-xs text-gray-400 mt-2">
+        💡 Pode ser qualquer área — não precisa ser tecnologia. Use as sugestões ou digite a sua.
+      </p>
+    </div>
+  )
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export function GeradorClient() {
@@ -109,6 +222,7 @@ export function GeradorClient() {
 
   const [profile, setProfile] = useState<UserProfile>({
     area:      '',
+    context:   '',
     level:     'iniciante',
     objective: 'renda-extra',
     time:      'pouco',
@@ -227,7 +341,7 @@ export function GeradorClient() {
                 onClick={() => { setStep('form'); setResponse(null) }}
                 className="flex items-center gap-2 text-sm text-gray-500 hover:text-sky-600 transition-colors"
               >
-                ← Gerar nova ideia
+                ← Gerar novo plano
               </button>
               <IdeaCard ideia={response.data} source={response.source} fallback={response.fallback} profile={profile} isPremium={isPremium} />
             </div>
@@ -250,76 +364,124 @@ function Formulario({ profile, setProfile, loading, loadMsg, error, onGenerate }
 }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="bg-gradient-to-r from-sky-600 to-violet-600 px-6 py-4">
-        <h2 className="text-white font-bold text-lg">🤖 Configure seu copiloto</h2>
-        <p className="text-sky-100 text-sm">Quanto mais detalhes, mais preciso será o plano de execução</p>
+      {/* Header do formulário */}
+      <div className="bg-gradient-to-r from-sky-600 to-violet-600 px-6 py-5">
+        <h2 className="text-white font-bold text-lg flex items-center gap-2">
+          <span>🎯</span>
+          Configure seu copiloto
+        </h2>
+        <p className="text-sky-100 text-sm mt-1">
+          Quanto mais detalhes você fornecer, mais preciso será seu plano de execução
+        </p>
       </div>
 
-      <div className="p-6 space-y-7">
+      <div className="p-6 space-y-8">
+        {/* Campo 1: Área com autocomplete */}
+        <AreaInput
+          value={profile.area}
+          onChange={v => setProfile(p => ({ ...p, area: v }))}
+          error={error}
+        />
+
+        {/* Campo 2: Contexto (novo) */}
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">
-            1. Qual é sua área de interesse ou experiência?
+            2. Explique melhor o que você pensa em construir{' '}
+            <span className="text-gray-400 font-normal">(opcional)</span>
           </label>
-          <input
-            type="text"
-            value={profile.area}
-            onChange={e => setProfile(p => ({ ...p, area: e.target.value }))}
-            placeholder="Ex: nutrição, marketing, advocacia, fitness, contabilidade..."
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-sky-500 focus:outline-none text-gray-800 text-sm transition-colors"
+          <textarea
+            value={profile.context}
+            onChange={e => setProfile(p => ({ ...p, context: e.target.value }))}
+            placeholder="Ex: Quero criar automações para nutricionistas usando IA e WhatsApp. Ou: Quero uma renda extra com templates digitais."
+            rows={3}
+            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-violet-500 focus:outline-none text-gray-800 text-sm transition-colors resize-none"
           />
-          <p className="text-xs text-gray-400 mt-1">Pode ser qualquer área — não precisa ser tecnologia</p>
+          <p className="text-xs text-gray-400 mt-2">
+            💡 Dica: conte sobre sua experiência, o problema que quer resolver ou a ideia que já tem em mente.
+          </p>
         </div>
 
-        <OpcaoGrupo label="2. Qual é seu nível de conhecimento técnico?" opcoes={LEVELS}
-          valor={profile.level} onChange={v => setProfile(p => ({ ...p, level: v as UserProfile['level'] }))}
-          corAtiva="border-sky-500 bg-sky-50" />
+        {/* Campo 3: Nível */}
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-3">
+            3. Qual é seu nível de conhecimento técnico?
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {LEVELS.map(({ value, label, desc }) => (
+              <button key={value} onClick={() => setProfile(p => ({ ...p, level: value as UserProfile['level'] }))}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  profile.level === value ? 'border-sky-500 bg-sky-50' : 'border-gray-100 hover:border-gray-200 bg-gray-50'
+                }`}>
+                <div className="font-bold text-sm text-gray-800">{label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <OpcaoGrupo label="3. Qual é seu objetivo principal?" opcoes={OBJECTIVES}
-          valor={profile.objective} onChange={v => setProfile(p => ({ ...p, objective: v as UserProfile['objective'] }))}
-          corAtiva="border-violet-500 bg-violet-50" />
+        {/* Campo 4: Objetivo */}
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-3">
+            4. Qual é seu objetivo principal?
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {OBJECTIVES.map(({ value, label, desc }) => (
+              <button key={value} onClick={() => setProfile(p => ({ ...p, objective: value as UserProfile['objective'] }))}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  profile.objective === value ? 'border-violet-500 bg-violet-50' : 'border-gray-100 hover:border-gray-200 bg-gray-50'
+                }`}>
+                <div className="font-bold text-sm text-gray-800">{label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <OpcaoGrupo label="4. Quanto tempo você tem disponível?" opcoes={TIMES}
-          valor={profile.time} onChange={v => setProfile(p => ({ ...p, time: v as UserProfile['time'] }))}
-          corAtiva="border-emerald-500 bg-emerald-50" />
+        {/* Campo 5: Tempo */}
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-3">
+            5. Quanto tempo você tem disponível?
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {TIMES.map(({ value, label, desc }) => (
+              <button key={value} onClick={() => setProfile(p => ({ ...p, time: value as UserProfile['time'] }))}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  profile.time === value ? 'border-emerald-500 bg-emerald-50' : 'border-gray-100 hover:border-gray-200 bg-gray-50'
+                }`}>
+                <div className="font-bold text-sm text-gray-800">{label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
 
-        {error && <p className="text-red-500 text-sm bg-red-50 rounded-lg px-4 py-2">{error}</p>}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            <p className="text-red-600 text-sm font-medium">{error}</p>
+          </div>
+        )}
 
+        {/* Botão de gerar */}
         <button onClick={onGenerate} disabled={loading}
-          className="w-full py-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 text-white font-extrabold rounded-xl transition-all text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:translate-y-0">
+          className="w-full py-4 bg-gradient-to-r from-sky-600 to-violet-600 hover:from-sky-500 hover:to-violet-500 disabled:from-sky-400 disabled:to-violet-400 text-white font-extrabold rounded-xl transition-all text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:translate-y-0">
           {loading ? (
             <span className="flex flex-col items-center gap-1">
               <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Gerando sua ideia personalizada...
+                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Gerando seu plano personalizado...
               </span>
               <span className="text-xs text-sky-200 font-normal animate-pulse">{LOADING_MSGS[loadMsg]}</span>
             </span>
           ) : (
-          `🚀 Gerar minha ideia`
+            <span className="flex items-center justify-center gap-2">
+              🚀 Gerar meu plano de execução
+            </span>
           )}
         </button>
-      </div>
-    </div>
-  )
-}
 
-// ─── Grupo de opções ──────────────────────────────────────────────────────────
-
-function OpcaoGrupo({ label, opcoes, valor, onChange, corAtiva }: {
-  label: string; opcoes: { value: string; label: string; desc: string }[]
-  valor: string; onChange: (v: string) => void; corAtiva: string
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-gray-700 mb-3">{label}</label>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {opcoes.map(({ value, label, desc }) => (
-          <button key={value} onClick={() => onChange(value)}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${valor === value ? corAtiva : 'border-gray-100 hover:border-gray-200 bg-gray-50'}`}>
-            <div className="font-bold text-sm text-gray-800">{label}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
-          </button>
-        ))}
+        <p className="text-xs text-gray-400 text-center">
+          Gratuito · Sem cadastro · Resultado em segundos
+        </p>
       </div>
     </div>
   )
@@ -334,7 +496,9 @@ function UsageBar({ isPremium }: { isPremium: boolean }) {
         <div className="flex items-center gap-2">
           <span className="text-lg">💎</span>
           <span className="text-sm font-bold text-emerald-700">Plano Premium ativo</span>
-          <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Ilimitado</span>
+          <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">
+            Ilimitado
+          </span>
         </div>
       </div>
     )
@@ -345,7 +509,9 @@ function UsageBar({ isPremium }: { isPremium: boolean }) {
         <span className="text-lg">🆓</span>
         <span className="text-sm font-semibold text-gray-700">Plano Grátis — 1 ideia completa</span>
       </div>
-      <a href="/upgrade" className="text-xs font-bold text-sky-600 hover:underline">Fazer upgrade →</a>
+      <a href="/upgrade" className="text-xs font-bold text-sky-600 hover:underline">
+        Fazer upgrade →
+      </a>
     </div>
   )
 }
@@ -413,7 +579,7 @@ function IdeaCard({ ideia, source, fallback, profile, isPremium }: {
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               {source === 'ai' && !fallback && (
-                <span className="inline-block bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2">
+                <span className="inline-block bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
                   ✨ Gerado com IA
                 </span>
               )}
@@ -431,12 +597,12 @@ function IdeaCard({ ideia, source, fallback, profile, isPremium }: {
           </div>
         </div>
 
-        {/* Todos os campos — sem blur */}
+        {/* Todos os campos */}
         <div className="divide-y divide-gray-50">
           {CAMPOS_COMPLETOS.map(({ icon, label, value, bg }) => (
             <div key={label} className={`flex gap-4 p-5 ${bg}`}>
               <span className="text-2xl shrink-0">{icon}</span>
-              <div>
+              <div className="flex-1">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
                 <p className="text-gray-800 text-sm leading-relaxed font-medium">{value}</p>
               </div>
@@ -444,13 +610,17 @@ function IdeaCard({ ideia, source, fallback, profile, isPremium }: {
           ))}
         </div>
 
-        {/* Passo a passo completo */}
+        {/* Passo a passo */}
         <div className="bg-emerald-50 border-t border-emerald-100 p-5">
-          <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3">✅ Passo a passo de execução</p>
+          <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3">
+            ✅ Passo a passo de execução
+          </p>
           <ol className="space-y-2">
             {ideia.passos.map((passo, i) => (
               <li key={i} className="flex gap-3 text-sm text-gray-800">
-                <span className="shrink-0 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold">{i + 1}</span>
+                <span className="shrink-0 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                  {i + 1}
+                </span>
                 <span className="leading-relaxed">{passo}</span>
               </li>
             ))}
@@ -459,7 +629,9 @@ function IdeaCard({ ideia, source, fallback, profile, isPremium }: {
 
         {/* Copiloto: Aprofundar */}
         <div className="border-t border-gray-100 p-5">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">🤖 Copiloto — aprofundar esta ideia</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+            🤖 Copiloto — aprofundar este plano
+          </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {DEEPEN_TOPICS.map(({ value, label, desc }) => (
               <button key={value} onClick={() => handleDeepen(value)}
@@ -491,12 +663,12 @@ function IdeaCard({ ideia, source, fallback, profile, isPremium }: {
             className={`flex-1 py-3 font-semibold rounded-xl text-sm transition-all ${
               copied ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}>
-            {copied ? '✅ Copiado!' : '📋 Copiar ideia'}
+            {copied ? '✅ Copiado!' : '📋 Copiar plano'}
           </button>
           <button
             onClick={() => setShowSaveModal(true)}
             className="flex-1 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm transition-all hover:-translate-y-0.5 shadow-sm hover:shadow-sky-200">
-            💾 Salvar essa ideia
+            💾 Salvar plano
           </button>
         </div>
       </div>
@@ -527,8 +699,8 @@ function SavedIdeasPanel({ saved, onDelete, onOpen }: {
     return (
       <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
         <div className="text-4xl mb-3">💡</div>
-        <p className="text-gray-700 font-bold">Nenhuma ideia salva ainda</p>
-        <p className="text-gray-400 text-sm mt-1">Gere uma ideia e clique em “Salvar essa ideia”.</p>
+        <p className="text-gray-700 font-bold">Nenhum plano salvo ainda</p>
+        <p className="text-gray-400 text-sm mt-1">Gere um plano e clique em "Salvar plano".</p>
       </div>
     )
   }
@@ -615,7 +787,7 @@ function SaveModal({ ideia, profile, onSaved, onClose }: {
           <>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="font-extrabold text-gray-900 text-lg">💾 Salvar essa ideia</h3>
+                <h3 className="font-extrabold text-gray-900 text-lg">💾 Salvar este plano</h3>
                 <p className="text-gray-500 text-sm mt-0.5">Informe seu e-mail para guardar <strong className="text-gray-700">{ideia.nome}</strong></p>
               </div>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
@@ -638,7 +810,7 @@ function SaveModal({ ideia, profile, onSaved, onClose }: {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Salvando...
                   </span>
-                ) : '💾 Salvar ideia'}
+                ) : '💾 Salvar plano'}
               </button>
               <p className="text-xs text-gray-400 text-center">Sem spam. Você também recebe 1 ideia por semana.</p>
             </div>
@@ -646,7 +818,7 @@ function SaveModal({ ideia, profile, onSaved, onClose }: {
         ) : (
           <div className="text-center py-4">
             <div className="text-4xl mb-3">✅</div>
-            <h3 className="font-extrabold text-gray-900 text-lg mb-1">Ideia salva!</h3>
+            <h3 className="font-extrabold text-gray-900 text-lg mb-1">Plano salvo!</h3>
             <p className="text-gray-500 text-sm mb-4">Acesse em <strong>Minhas Ideias</strong> quando quiser.</p>
             <button onClick={onClose}
               className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm transition-colors">

@@ -2,12 +2,6 @@
 
 import Link from 'next/link'
 
-const TESTIMONIALS = [
-  { name: 'Marcos S.', role: 'Freelancer', text: 'Validei uma ideia em 3 dias usando o ScaleMind. Já tenho 2 clientes pagando.' },
-  { name: 'Ana P.',    role: 'Nutricionista', text: 'Nunca pensei que conseguiria criar um negócio digital. A ideia que recebi foi perfeita pro meu nicho.' },
-  { name: 'Rafael T.', role: 'CLT + renda extra', text: 'Consegui meu primeiro cliente com uma ideia daqui. R$ 800 no primeiro mês.' },
-]
-
 const STATS = [
   { value: 'R$0',   label: 'Para começar' },
   { value: '2min',  label: 'Para ter sua ideia' },
@@ -57,8 +51,8 @@ export function HeroSection() {
         {/* O que o copiloto faz */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto mb-10">
           {COPILOT_STEPS.map(({ icon, label, desc }) => (
-            <div key={label} className="bg-white/8 backdrop-blur-sm rounded-xl border border-white/15 p-3 text-center">
-              <div className="text-2xl mb-1">{icon}</div>
+            <div key={label} className="card-3d bg-white/8 backdrop-blur-sm rounded-xl border border-white/15 p-3 text-center">
+              <div className="text-2xl mb-1 card-3d-icon">{icon}</div>
               <div className="text-white text-xs font-bold">{label}</div>
               <div className="text-gray-400 text-xs mt-0.5">{desc}</div>
             </div>
@@ -91,21 +85,7 @@ export function HeroSection() {
           ))}
         </div>
 
-        {/* Depoimentos */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-          {TESTIMONIALS.map(({ name, role, text }) => (
-            <div key={name} className="bg-white/8 backdrop-blur-sm rounded-2xl border border-white/15 p-5 text-left">
-              <div className="flex items-center gap-1 text-amber-400 text-sm mb-3">
-                {'★★★★★'}
-              </div>
-              <p className="text-white/75 text-sm leading-relaxed mb-4">"{text}"</p>
-              <div>
-                <p className="text-white font-semibold text-sm">{name}</p>
-                <p className="text-gray-500 text-xs">{role}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+
       </div>
     </section>
   )

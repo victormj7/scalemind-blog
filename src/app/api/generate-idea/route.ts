@@ -31,9 +31,19 @@ function buildUserMessage(profile: UserProfile): string {
     total: 'dedicação total',
   }
 
-  return `Gere uma ideia de MicroSaaS com base nesses dados:
+  let message = `Gere uma ideia de MicroSaaS com base nesses dados:
 
-Área: ${profile.area}
+Área: ${profile.area}`
+
+  if (profile.context && profile.context.trim()) {
+    message += `
+
+Contexto adicional do usuário: "${profile.context.trim()}"
+
+IMPORTANTE: Considere este contexto para personalizar a ideia. O usuário já tem uma direção em mente.`
+  }
+
+  message += `
 Nível: ${levelMap[profile.level]}
 Objetivo: ${objectiveMap[profile.objective]}
 Tempo disponível: ${timeMap[profile.time]}
@@ -66,6 +76,8 @@ Regras obrigatórias:
 - passos deve ter exatamente 4 itens
 - Todos os valores monetários em R$
 - Seja direto e prático`
+
+  return message
 }
 
 // ─── Geração via OpenAI ───────────────────────────────────────────────────────
@@ -200,6 +212,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     profile = {
       area:      String(body.area ?? 'geral').slice(0, 100),
+      context:   String(body.context ?? '').slice(0, 500),
       level:     ['iniciante','intermediario','avancado'].includes(body.level) ? body.level : 'iniciante',
       objective: ['renda-extra','criar-negocio','escalar'].includes(body.objective) ? body.objective : 'renda-extra',
       time:      ['pouco','medio','total'].includes(body.time) ? body.time : 'pouco',

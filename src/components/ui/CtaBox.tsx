@@ -19,6 +19,7 @@ export function CtaBox({
   subtitle   = 'Use nosso gerador gratuito e receba uma ideia de negócio personalizada com potencial de receita real.',
   buttonText = '🚀 Gerar ideia grátis agora',
   href       = '/ferramentas/gerador-microsaas',
+  cta,
 }: CtaBoxProps) {
   if (variant === 'dark') {
     const useCta = cta || { title, subtitle, buttonText }

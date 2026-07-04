@@ -1,6 +1,7 @@
 // Perfil do usuário coletado no formulário
 export interface UserProfile {
   area:      string
+  context:   string  // Novo campo: contexto/detalhes adicionais
   level:     'iniciante' | 'intermediario' | 'avancado'
   objective: 'renda-extra' | 'criar-negocio' | 'escalar'
   time:      'pouco' | 'medio' | 'total'

@@ -251,12 +251,6 @@
     50%       { transform: translateY(-20px) scale(1.05); }
   }
 
-  /* Grid de pontos sutil */
-  .hero-grid {
-    background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-
   /* Brilho no botão CTA */
   .btn-glow {
     position: relative;
@@ -277,5 +271,50 @@
 
   .btn-glow:hover::after {
     left: 120%;
+  }
+
+  /* ── Cards 3D ── */
+  .card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;
+    animation: float3d 6s ease-in-out infinite;
+  }
+
+  .card-3d:nth-child(1) { animation-delay: 0s; }
+  .card-3d:nth-child(2) { animation-delay: 1.5s; }
+  .card-3d:nth-child(3) { animation-delay: 3s; }
+  .card-3d:nth-child(4) { animation-delay: 4.5s; }
+
+  .card-3d:hover {
+    transform: perspective(600px) rotateX(-8deg) rotateY(6deg) translateY(-6px) scale(1.04);
+    box-shadow: 0 20px 40px rgba(14, 165, 233, 0.25), 0 0 0 1px rgba(14, 165, 233, 0.2);
+  }
+
+  .card-3d-icon {
+    display: inline-block;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    transform: translateZ(20px);
+  }
+
+  .card-3d:hover .card-3d-icon {
+    transform: translateZ(40px) scale(1.2);
+  }
+
+  @keyframes float3d {
+    0%, 100% { transform: perspective(600px) rotateX(0deg) rotateY(0deg) translateY(0px); }
+    25%       { transform: perspective(600px) rotateX(2deg) rotateY(-2deg) translateY(-3px); }
+    75%       { transform: perspective(600px) rotateX(-2deg) rotateY(2deg) translateY(-5px); }
+  }
+
+  /* ── Grid 3D perspectiva no hero ── */
+  .hero-grid {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: perspective(800px) rotateX(20deg) scaleY(1.4);
+    transform-origin: top center;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
   }
 }
